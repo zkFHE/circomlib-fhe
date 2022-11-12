@@ -1,6 +1,7 @@
-pragma circom 2.0.0;
+pragma circom 2.1.0;
 
 include "util.circom";
+include "rns.circom";
 include "mod_q.circom";
 include "circomlib/circuits/multiplexer.circom";
 
@@ -76,11 +77,8 @@ template parallel AddPoly(N, q) {
 	signal input in2[N];
 	signal output out[N];
 	
-	component add[N];
 	for (var i = 0; i < N; i++) {
-		add[i] = parallel AddModQ(2, q);
-		add[i].in <== [in1[i], in2[i]];
-		add[i].out ==> out[i];
+		out[i] <== parallel AddModQ(2, q)([in1[i], in2[i]]);
 	}
 }
 
