@@ -1,8 +1,8 @@
 pragma circom 2.0.0;
 
-include "bitify.circom";
-include "compconstant.circom";
-include "binsum.circom";
+include "circomlib/circuits/bitify.circom";
+include "circomlib/circuits/compconstant.circom";
+include "circomlib/circuits/binsum.circom";
 
 template LtConstant(ct) {
 //    assert(ct >= 1);

@@ -2,7 +2,7 @@ pragma circom 2.0.0;
 
 include "util.circom";
 include "mod_q.circom";
-include "multiplexer.circom";
+include "circomlib/circuits/multiplexer.circom";
 
 
 template parallel SumK(N, k, q, inp_size) {

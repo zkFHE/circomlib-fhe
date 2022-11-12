@@ -3,7 +3,7 @@ pragma circom 2.0.0;
 include "add.circom";
 include "util.circom";
 include "mod_q.circom";
-include "multiplexer.circom";
+include "circomlib/circuits/multiplexer.circom";
 
 
 template parallel MulPolySchoolbook(N, q) {
