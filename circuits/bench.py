@@ -1,8 +1,10 @@
 import subprocess
 import sys
 import os
+import csv
+from datetime import datetime
 
-MAINS = ["main"]
+MAINS = ["main.circom"]
 PREFIXES = ["non-linear constraints", "linear constraints", "public inputs", "public outputs", "private inputs", "private outputs", "wires", "labels"]
 
 def parse(out):
@@ -15,16 +17,26 @@ def parse(out):
     return parsed
 
 def circom(main):
-    cmd = f"circom --r1cs --json -o out/ {main}.circom"
-    print(cmd)
+    cmd = f"circom --r1cs --json -o out/ {main}"
+    # print(cmd)
     res = subprocess.run(cmd, capture_output=True, env={"PATH": os.environ["PATH"]}, shell=True, text=True)
     if res.returncode != 0:
-        print()
         print(f"'{res.args}' failed with error code {res.returncode} and output {res.stderr}", file=sys.stderr)
-        return
+        return None
     return parse(res.stdout)
 
 if __name__ == "__main__":
-    for main in MAINS:
+    for main in sys.argv[1:]:
         d = circom(main)
-        print(d)
+        if d is not None:
+            d["name"] = main
+            print(",".join([str(tup[1]) for tup in sorted(d.items(), key=lambda tup: tup[0])]))
+    
+    # with open(f"out/bench_{datetime.now().isoformat()}", "w") as out_file:
+    #     writer = csv.DictWriter(out_file, fieldnames=["name"] + PREFIXES)
+    #     writer.writeheader()
+    #     for main in MAINS:
+    #         d = circom(main)
+    #         if d is not None:
+    #             d["name"] = main
+    #             writer.writerow(d)
