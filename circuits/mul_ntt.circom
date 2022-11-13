@@ -30,7 +30,12 @@ template parallel MulNTT(L, N, q1, q2, q3) {
 	signal input in2[L][N];
 	signal output out[L][N];
 	
-	var q[L] = [q1, q2, q3];
+	var q[L]; 
+	assert(0 < L && L <= 3);
+	if (L == 1) {q = [q1]; }
+	if (L == 2) {q = [q2]; }
+	if (L == 3) {q = [q3]; }
+
 	for (var i = 0; i < L; i++) {
 		if (q[i] == 0) {
 			// TODO: add explicit constraint that out === 0, or do we discard this in a higher protocol level?
@@ -42,5 +47,3 @@ template parallel MulNTT(L, N, q1, q2, q3) {
 		}
 	}
 }
-
-component main {public [in1, in2]} = MulNTT(3, 512, (1<<60), (1<<61), 0);

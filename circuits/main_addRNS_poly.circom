@@ -9,7 +9,11 @@ template AddRNS(L, N, q1, q2, q3) {
 	signal input in2[L][N];
 	signal output out[L][N];
 	
-	var q = q1 * q2 * q3;
+	var q = 1;
+	if (q1 > 0) { q *= q1; }
+	if (q2 > 0) { q *= q2; }
+	if (q3 > 0) { q *= q3; }
+
 	component add = parallel AddPoly(N, q);
 	
 	add.in1 <== parallel FromRNSs(L, N, q1, q2, q3)(in1);
@@ -17,4 +21,4 @@ template AddRNS(L, N, q1, q2, q3) {
 	out <== parallel ToRNSs(L, N, q1, q2, q3)(add.out);
 }
 
-component main {public [in1, in2]} = AddRNS(3, 2, 13, 15, 19);
+component main {public [in1, in2]} = AddRNS(1, 2048, (1<<56), 0, 0);

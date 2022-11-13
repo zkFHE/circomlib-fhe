@@ -2,7 +2,7 @@ pragma circom 2.1.0;
 
 include "util.circom";
 include "rns.circom";
-include "mod_q.circom";
+include "mod.circom";
 include "circomlib/circuits/multiplexer.circom";
 
 

@@ -1,7 +1,7 @@
 pragma circom 2.1.0;
 
 include "util.circom";
-include "mod_q.circom";
+include "mod.circom";
 
 function add(x, y) {
 	return x + y;
