@@ -5,6 +5,16 @@ include "rns.circom";
 include "mod.circom";
 include "circomlib/circuits/multiplexer.circom";
 
+template FastAddMod(q) {
+	signal input in[2]; // both inputs need to be in Z/qZ
+	signal sum <== in[0] + in[1];
+	signal quotient <-- sum \ q; // quotient is either 0 or 1
+	signal output out <-- sum % q;
+
+	LtConstant(q)(out); // Check that remainder is less than q
+	quotient * q + out === sum; // Check that quotient and remainder are correct
+	quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
+}
 
 template parallel SumK(N, k, q, inp_size) {
 	// assert(q < (1 << 62));
@@ -78,7 +88,7 @@ template parallel AddPoly(N, q) {
 	signal output out[N];
 	
 	for (var i = 0; i < N; i++) {
-		out[i] <== parallel AddModQ(2, q)([in1[i], in2[i]]);
+		out[i] <== parallel FastAddMod(q)([in1[i], in2[i]]);
 	}
 }
 
