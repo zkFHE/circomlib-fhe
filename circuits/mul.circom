@@ -1,6 +1,10 @@
 pragma circom 2.1.0;
 
+include "add.circom";
+include "util.circom";
+include "mod.circom";
 include "ntt.circom";
+include "circomlib/circuits/multiplexer.circom";
 
 template parallel MulPointwise(N, q) {
 	signal input in1[N]; 
@@ -45,5 +49,30 @@ template parallel MulNTT(L, N, q1, q2, q3) {
 			var tmp[N] = MulPointwise(N, q[i])(tmp1, tmp2);
 			out[i] <== INTT(N, q[i])(tmp);
 		}
+	}
+}
+
+template parallel MulPolySchoolbook(N, q) {
+	signal input in1[N];
+	signal input in2[N];
+	var tosum[N][2*N];
+	signal output out[N];
+	
+	var l;
+	var n = N-1;
+	for (var k = 0; k <= n; k++) {
+		for (var i = 0; i <= k; i++) {
+			tosum[k][i] = in1[i] * in2[k-i];
+		}
+		
+		// Reduce mod (X^N + 1)
+		l = k + N;
+		var len2 = min(n, l) - max(0, l-n) + 1;
+		var idx = 0;
+		for (var i = max(0, l-n); i <= min(n, l); i++) {
+			tosum[k][k+idx+1] = 2*q - (in1[i] * in2[l-i]);
+			idx += 1;
+		}
+		out[k] <== SumK(2*N, k + 1 + len2, q, 2*log2(q))(tosum[k]);
 	}
 }
