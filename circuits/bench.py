@@ -17,7 +17,7 @@ def parse(out):
     return parsed
 
 def circom(main):
-    cmd = f"circom --r1cs --json -o out/ {main}"
+    cmd = f"circom --r1cs --json --wasm --c -o out/ {main}"
     # print(cmd)
     res = subprocess.run(cmd, capture_output=True, env={"PATH": os.environ["PATH"]}, shell=True, text=True)
     if res.returncode != 0:
