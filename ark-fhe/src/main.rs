@@ -3,58 +3,37 @@ use ark_circom::*;
 use ark_groth16::{
     create_random_proof as prove, generate_random_parameters, prepare_verifying_key, verify_proof,
 };
-use clap::{value_parser, Arg, ArgAction::Append, Command};
-use num_bigint::{BigInt, ToBigInt};
+use clap::{Arg, ArgAction::Append, Command, value_parser};
+use num_bigint::{ToBigInt};
 use rand::thread_rng;
 
 fn main() {
-    let N = 16;
-/*    let args = Command::new("ark-circom-fhe")
+    let args = Command::new("ark-circom-fhe")
         .version("0.1.0")
         .author("Christian Knabenhans")
         .about("Prove FHE computations in zero-knowledge")
         .arg(
-            Arg::new("r1cs")
+            Arg::new("circuit_name")
                 .value_parser(value_parser!(String))
                 .required(true)
-                .takes_value(true)
-                .help(".r1cs file"),
-        )
-        .arg(
-            Arg::new("wasm")
-                .value_parser(value_parser!(String))
-                .required(true)
-                .takes_value(true)
-                .help(".wasm file"),
+                .help("circuit name"),
         )
         .arg(
             Arg::new("inputs")
                 .value_parser(value_parser!(String))
                 .required(true)
-                .takes_value(true)
+                // .takes_value(true)
                 .action(Append)
                 .help("names of input values to the circuit")
-                .multiple_values(true)
-                                                               //.last(true),
         )
         .get_matches();
-    // let circuit_name = args
-    //     .get_one::<String>("circuit_name")
-    //     .expect("`circuit_name`is required");
-    let wasm = args
-        .get_one::<String>("wasm")
-        .expect("`wasm` is required");
-        let r1cs = args
-        .get_one::<String>("r1cs")
-        .expect("`r1cs` is required");
-    let inputs = args
-        .get_many::<String>("inputs")
-        .expect("`inputs` is required")
-        .map(|v| v.as_str())
-        .collect::<Vec<_>>();*/
+    let circuit_name = args
+        .get_one::<String>("circuit_name")
+        .expect("`circuit_name`is required");
 
-    let wasm = "test_vectors/main_add_poly.16_js/main_add_poly.16.wasm";
-    let r1cs = "test_vectors/main_add_poly.16.r1cs";
+    let wasm = format!("../circuits/out/{circuit_name}_js/{circuit_name}.wasm");
+    let r1cs = format!("../circuits/out/{circuit_name}.r1cs");
+    let n: u32 = circuit_name.split(".").last().unwrap().parse().unwrap();
     let inputs = vec!["in1", "in2"];
 
     println!("Loading circuit");
@@ -62,19 +41,15 @@ fn main() {
     println!("R1CS: {r1cs}");
 
     // Load the WASM and R1CS for witness and proof generation
-    let cfg = CircomConfig::<Bn254>::new(
-        wasm,
-        r1cs
-    )
-    .unwrap();
+    let cfg = CircomConfig::<Bn254>::new(wasm, r1cs).unwrap();
 
     // Insert our public inputs as key value pairs
     let mut builder = CircomBuilder::new(cfg);
 
     for input in inputs {
-        for i in 0..N {
-        builder.push_input(input, 0.to_bigint().unwrap());
-    }
+        for i in 0..n {
+            builder.push_input(input, i.to_bigint().unwrap());
+        }
     }
 
     // Create an empty instance for setting it up
