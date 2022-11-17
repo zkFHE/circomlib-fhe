@@ -4,8 +4,11 @@ use ark_groth16::{
     create_random_proof as prove, generate_random_parameters, prepare_verifying_key, verify_proof,
 };
 use clap::{Arg, ArgAction::Append, Command, value_parser};
-use num_bigint::{ToBigInt};
+use num_bigint::ToBigInt;
 use rand::thread_rng;
+use crate::groth16::*;
+
+mod groth16;
 
 fn main() {
     let args = Command::new("ark-circom-fhe")
@@ -58,7 +61,8 @@ fn main() {
     // Run a trusted setup
     println!("Setup");
     let mut rng = thread_rng();
-    let params = generate_random_parameters::<Bn254, _, _>(circom, &mut rng).unwrap();
+    let params = setup::<Bn254>(circom, rng).unwrap();
+    // let params = generate_random_parameters::<Bn254, _, _>(circom, &mut rng).unwrap();
 
     // Get the populated instance of the circuit with the witness
     let circom = builder.build().unwrap();
@@ -67,11 +71,15 @@ fn main() {
 
     // Generate the proof
     // let proof = prove(circom, &params, &mut rng)?;
-    let proof = prove(circom, &params, &mut rng).unwrap();
+    let mut rng2 = thread_rng();
+    let proof = prove(circom, &params, &mut rng2).unwrap();
 
     // Check that the proof is valid
+    // TODO: do we want to use the prepared vk?
     let pvk = prepare_verifying_key(&params.vk);
-    let verified = verify_proof(&pvk, &proof, &inputs).unwrap();
+
+    // let verified = verify_proof(&pvk, &proof, &inputs).unwrap();
+    let verified = verify(&pvk, &proof, &inputs).unwrap();
 
     println!("{verified}");
     assert!(verified);
