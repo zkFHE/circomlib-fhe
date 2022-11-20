@@ -29,6 +29,27 @@ template parallel MulsPointwise(L, N, q1, q2, q3) {
 	}
 }
 
+
+template parallel MulPointwiseNoMod(N) {
+	signal input in1[N]; 
+	signal input in2[N]; 
+	signal output out[N];
+	
+	for (var i = 0; i < N; i++) {
+		out[i] <== in1[i] * in2[i];
+	}
+}
+
+template parallel MulsPointwiseNoMod(L, N) {
+	signal input in1[L][N]; 
+	signal input in2[L][N]; 
+	signal output out[L][N];
+	
+	for (var i = 0; i < L; i++) {
+		out[i] <== MulPointwiseNoMod(N)(in1[i], in2[i]);
+	}
+}
+
 template parallel MulNTT(L, N, q1, q2, q3) {
 	signal input in1[L][N];
 	signal input in2[L][N];

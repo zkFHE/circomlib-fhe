@@ -8,70 +8,66 @@ use rand::thread_rng;
 use ark_fhe::groth16;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let circuit_name = "main_add_poly.1024";
+    let circuit_name = "main_bench1.512";
     let wasm = format!("../circuits/out/{circuit_name}_js/{circuit_name}.wasm");
     let r1cs = format!("../circuits/out/{circuit_name}.r1cs");
     let n: u32 = circuit_name.split(".").last().unwrap().parse().unwrap();
-    let inputs = vec!["in1", "in2"];
+    let inputs = vec!["in", "w1", "w2"];
 
     let cfg = CircomConfig::<Bn254>::new(wasm, r1cs).unwrap();
-    // Insert our public inputs as key value pairs
     let mut builder = CircomBuilder::new(cfg);
     for input in inputs {
+        if (input == "in") {
         for i in 0..n {
-            builder.push_input(input, i.to_bigint().unwrap());
+            builder.push_input(input, 0.to_bigint().unwrap());
+            builder.push_input(input, 0.to_bigint().unwrap());
+        }
+        } else {
+        for i in 0..n {
+            builder.push_input(input, 0.to_bigint().unwrap());
+        }
         }
     }
 
+    let circom_empty = builder.setup();
+    let circom_filled = builder.build().unwrap();
 
-    // Create an empty instance for setting it up
-    let circom = builder.setup();
+    let mut rng = thread_rng();
+    let params = groth16::setup(circom_empty.clone(), &mut rng).unwrap();
 
-    c.bench_function("groth16::setup::add_poly",
+    let pvk = prepare_verifying_key(&params.vk);
+    let inputs = circom_filled.get_public_inputs().unwrap();
+
+    let proof = groth16::prove(circom_filled.clone(), &params, &mut rng).unwrap();
+    let verified = groth16::verify(&pvk, &proof, &inputs).unwrap();
+    assert!(verified);
+
+    c.bench_function(&*format!("groth16::setup::{circuit_name}"),
                      move |b| {
-                         b.iter_batched(|| circom.clone(),
-                                        |circom| {
-                                            let rng = thread_rng();
-                                            groth16::setup(circom, rng)
+                         b.iter_batched(|| circom_empty.clone(),
+                                        |circuit| {
+                                            groth16::setup(circuit, &mut rng)
                                         }, BatchSize::LargeInput)
                      },
     );
 
-    // Get the populated instance of the circuit with the witness
-    let circom = builder.build().unwrap();
-    let circom_cloned = circom.clone();
-    let rng = thread_rng();
-    let params = groth16::setup(circom.clone(), rng).unwrap();
-    let params_cloned = params.clone();
-
-    c.bench_function("groth16::prove::add_poly",
+    let mut rng = thread_rng();
+    c.bench_function(&*format!("groth16::prove::{circuit_name}"),
                      move |b| {
-                         b.iter_batched(|| circom.clone(),
-                                        |circom| {
-                                            let rng = thread_rng();
-                                            groth16::prove(circom.clone(), &params, rng)
+                         b.iter_batched(|| circom_filled.clone(),
+                                        |circuit| {
+                                            groth16::prove(circuit, &params, &mut rng)
                                         }, BatchSize::LargeInput)
                      },
     );
 
-    let rng = thread_rng();
-    let proof = groth16::prove(circom_cloned.clone(), &params_cloned, rng).unwrap();
-    let proof_cloned = proof.clone();
-
-    let pvk = prepare_verifying_key(&params_cloned.vk);
-    let pvk_cloned = pvk.clone();
-    let inputs = circom_cloned.get_public_inputs().unwrap();
-    let inputs_cloned = inputs.clone();
-
-    c.bench_function("groth16::verify::add_poly",
+    c.bench_function(&*format!("groth16::verify::{circuit_name}"),
                      |b| {
                          b.iter(|| {
                              groth16::verify(&pvk, &proof, &inputs)
                          })
                      },
     );
-    let verified = groth16::verify(&pvk_cloned, &proof_cloned, &inputs_cloned).unwrap();
-    assert!(verified);
 }
 
 

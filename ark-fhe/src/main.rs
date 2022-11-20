@@ -1,8 +1,6 @@
 use ark_bn254::Bn254;
 use ark_circom::*;
-use ark_groth16::{
-    create_random_proof as prove, generate_random_parameters, prepare_verifying_key, verify_proof,
-};
+use ark_groth16::prepare_verifying_key;
 use clap::{Arg, ArgAction::Append, Command, value_parser};
 use num_bigint::ToBigInt;
 use rand::thread_rng;
@@ -32,16 +30,20 @@ fn main() {
         .get_matches();
     let circuit_name = args
         .get_one::<String>("circuit_name")
-        .expect("`circuit_name`is required");
+        .expect("`circuit_name` is required");
 
     let wasm = format!("../circuits/out/{circuit_name}_js/{circuit_name}.wasm");
     let r1cs = format!("../circuits/out/{circuit_name}.r1cs");
     let n: u32 = circuit_name.split(".").last().unwrap().parse().unwrap();
-    let inputs = vec!["in1", "in2"];
+    let inputs = args
+        .get_many::<String>("inputs")
+        .expect("`inputs` are required")
+        .collect::<Vec<&String>>();
 
     println!("Loading circuit");
     println!("WASM: {wasm}");
     println!("R1CS: {r1cs}");
+    println!("Inputs: {:?}", inputs);
 
     // Load the WASM and R1CS for witness and proof generation
     let cfg = CircomConfig::<Bn254>::new(wasm, r1cs).unwrap();
@@ -50,8 +52,8 @@ fn main() {
     let mut builder = CircomBuilder::new(cfg);
 
     for input in inputs {
-        for i in 0..n {
-            builder.push_input(input, i.to_bigint().unwrap());
+        for _ in 0..n {
+            builder.push_input(input, 0.to_bigint().unwrap());
         }
     }
 
@@ -59,10 +61,8 @@ fn main() {
     let circom = builder.setup();
 
     // Run a trusted setup
-    println!("Setup");
     let mut rng = thread_rng();
-    let params = setup::<Bn254>(circom, rng).unwrap();
-    // let params = generate_random_parameters::<Bn254, _, _>(circom, &mut rng).unwrap();
+    let params = setup(circom, &mut rng).unwrap();
 
     // Get the populated instance of the circuit with the witness
     let circom = builder.build().unwrap();
@@ -70,15 +70,10 @@ fn main() {
     let inputs = circom.get_public_inputs().unwrap();
 
     // Generate the proof
-    // let proof = prove(circom, &params, &mut rng)?;
-    let mut rng2 = thread_rng();
-    let proof = prove(circom, &params, &mut rng2).unwrap();
+    let proof = prove(circom, &params, &mut rng).unwrap();
 
     // Check that the proof is valid
-    // TODO: do we want to use the prepared vk?
     let pvk = prepare_verifying_key(&params.vk);
-
-    // let verified = verify_proof(&pvk, &proof, &inputs).unwrap();
     let verified = verify(&pvk, &proof, &inputs).unwrap();
 
     println!("{verified}");

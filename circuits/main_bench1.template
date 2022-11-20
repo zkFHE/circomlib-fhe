@@ -1,0 +1,41 @@
+pragma circom 2.1.0;
+
+include "mod.circom";
+include "mul.circom";
+
+template BenchSimple(l, n, t, q1, q2, q3) {
+	// Compute AddPlain(MulPlain(in1, w1), w2), where in1 is a ciphertext (in NTT form), and w1, w2 are plaintext server inputs; no ciphertext maintenance is carried out. 
+	signal input in[2][l][n]; 
+	signal input w1[n];
+	signal input w2[n];
+	signal mul[2][l][n];
+	signal output out[2][l][n];
+	
+	// Range check for plaintext inputs
+	LtConstantN(t, n)(w1);
+	LtConstantN(t, n)(w2);
+	
+	// mul = MulPlain(in, w1)
+	var q[L]; 
+	assert(0 < L && L <= 3);
+	if (L == 1) {q = [q1]; }
+	if (L == 2) {q = [q2]; }
+	if (L == 3) {q = [q3]; }
+	
+	for (var i = 0; i < l; i++) {
+		// OPTIMIZATION: if t < q[i], there's no need to reduce w modulo q[i] for each CRT component
+		assert(t < q[i]); 
+		mul[0][i] <== MulPointwise(n, q[i])(in[0][i], w1);
+		mul[1][i] <== MulPointwise(n, q[i])(in[1][i], w1);
+	}	
+	
+	// out = AddPlain(mul, w2)
+	for (var i = 0; i < l; i++) {
+		for (var j = 0; j < n; j++) {
+			out[0][i][j] <== parallel FastAddMod(q[i])([mul[0][i][j], w2[j]]);
+		}
+	}
+	out[1] <== mul[1];
+}
+
+component main {public [in]} = BenchSimple(L, N, T, Q1, Q2, Q3);
