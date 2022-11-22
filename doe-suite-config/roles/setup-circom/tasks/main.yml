@@ -1,0 +1,54 @@
+---
+
+- debug:
+    msg: "-> base only"
+  tags: [ print_action ]
+
+- name: Check if circom is already installed
+  ansible.builtin.shell: which circom
+  register: result
+  ignore_errors: true
+
+- set_fact:
+    circom: false
+    when: result is failed
+
+- set_fact:
+    circom: true
+    when: result is success
+
+- name: Install circom from source
+  block:
+    - name: Clone circom repository
+      ansible.builtin.git:
+        repo: https://github.com/iden3/circom.git
+        version: v2.1.2
+        dest: /tmp/circom
+      when: circom is false
+
+
+    - name: Build circom from source
+      ansible.builtin.shell:
+        cmd: cargo build --release
+        chdir: /tmp/circom
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+
+
+    - name: Install circom
+      ansible.builtin.shell:
+        cmd: cargo install --path circom
+        chdir: /tmp/circom
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+
+
+    - name: Print circom info
+      ansible.builtin.shell:
+        cmd: circom --version
+
+    - name: Add cargo bin dir to system-wide PATH.
+      copy:
+        dest: /etc/profile.d/custom-path.sh
+        content: 'PATH=$PATH:{{ ansible_env.HOME }}/.cargo/bin'
+  when: circom is false
