@@ -21,14 +21,13 @@ template parallel MulsPointwise(L, N, q1, q2, q3) {
 	signal input in2[L][N]; 
 	signal output out[L][N];
 	
-	var q[L] = [q1, q2, q3]; 
+	var q[3] = [q1, q2, q3];
 	for (var i = 0; i < L; i++) {
 		if (q[i] != 0) {
 			out[i] <== MulPointwise(N, q[i])(in1[i], in2[i]);
 		}
 	}
 }
-
 
 template parallel MulPointwiseNoMod(N) {
 	signal input in1[N]; 
@@ -96,4 +95,61 @@ template parallel MulPolySchoolbook(N, q) {
 		}
 		out[k] <== SumK(2*N, k + 1 + len2, q, 2*log2(q))(tosum[k]);
 	}
+}
+
+// Compute assuming both inputs are in NTT form
+template parallel MulCtxtCtxt(l, n, q1, q2, q3) {
+    signal input in1[2][l][n];
+    signal input in2[2][l][n];
+    signal tmp1[l][n];
+    signal tmp2[l][n];
+    signal output out[3][l][n];
+
+    out[0] <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[0], in2[0]);
+
+    tmp1 <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[0], in2[1]);
+    tmp2 <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[1], in2[0]);
+    out[1] <== parallel FastAddMods(l, n, q1, q2, q3)(tmp1, tmp2);
+
+    out[2] <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[1], in2[1]);
+}
+
+template parallel FastDoubleMod(q) {
+    // Requires in to be in Z/qZ
+    // OPTIMIZATION: use multiplication with constant 2 instead of addition
+    // This generates fewer labels, but has not influence on the number of constraints
+    signal input in; // both inputs need to be in Z/qZ
+    signal sum <== 2* in;
+    signal quotient <-- sum \ q; // quotient is either 0 or 1
+    signal output out <-- sum % q;
+
+    LtConstant(q)(out); // Check that remainder is less than q
+    quotient * q + out === sum; // Check that quotient and remainder are correct
+    quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
+}
+
+template parallel FastDoubleMods(l, n, q1, q2, q3) {
+	signal input in[l][n];
+	signal output out[l][n];
+
+	var q[3] = [q1, q2, q3];
+	for (var i = 0; i < l; i++) {
+		for (var j = 0; j < n; j++) {
+			out[i][j] <== parallel FastDoubleMod(q[i])(in[i][j]);
+		}
+	}
+}
+
+// Compute assuming both inputs are in NTT form
+template parallel SquareCtxt(l, n, q1, q2, q3) {
+    signal input in[2][l][n];
+    signal tmp[l][n];
+    signal output out[3][l][n];
+
+    out[0] <== parallel MulsPointwise(l, n, q1, q2, q3)(in[0], in[0]);
+
+    tmp <== parallel MulsPointwise(l, n, q1, q2, q3)(in[0], in[1]);
+    out[1] <== parallel FastDoubleMods(l, n, q1, q2, q3)(tmp);
+
+    out[2] <== parallel MulsPointwise(l, n, q1, q2, q3)(in[1], in[1]);
 }

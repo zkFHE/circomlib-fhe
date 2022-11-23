@@ -16,17 +16,42 @@ template parallel FastAddMod(q) {
 	quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
 }
 
-template parallel FastAddMods(l, n, q) {
+template parallel FastAddMods(l, n, q1, q2, q3) {
 	signal input in1[l][n];
 	signal input in2[l][n];
 	signal output out[l][n];
-	
+
+	var q[l] = [q1, q2, q3];
 	for (var i = 0; i < l; i++) {
 		for (var j = 0; j < n; j++) {
-			out[i][j] <== FastAddMod(q)([in1[i][j], in2[i][j]]);
+			out[i][j] <== parallel FastAddMod(q[i])([in1[i][j], in2[i][j]]);
 		}
 	}
 }
+
+template parallel FastSubMod(q) {
+	signal input in[2]; // both inputs need to be in Z/qZ
+	signal sum <== in[0] - in[1];
+	signal quotient <-- sum \ q; // quotient is either 0 or 1
+	signal output out <-- sum % q;
+
+	LtConstant(q)(out); // Check that remainder is less than q
+	quotient * q + out === sum; // Check that quotient and remainder are correct
+	quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
+}
+
+template parallel FastSubMods(l, n, q) {
+	signal input in1[l][n];
+	signal input in2[l][n];
+	signal output out[l][n];
+
+	for (var i = 0; i < l; i++) {
+		for (var j = 0; j < n; j++) {
+			out[i][j] <== FastSubMod(q)([in1[i][j], in2[i][j]]);
+		}
+	}
+}
+
 
 template parallel SumK(N, k, q, inp_size) {
 	// assert(q < (1 << 62));

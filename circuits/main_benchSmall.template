@@ -3,7 +3,7 @@ pragma circom 2.1.0;
 include "mod.circom";
 include "mul.circom";
 
-template BenchSimple(l, n, t, q1, q2, q3) {
+template BenchSmall(l, n, t, q1, q2, q3) {
 	// Compute AddPlain(MulPlain(in1, w1), w2), where in1 is a ciphertext (in NTT form), and w1, w2 are plaintext server inputs; no ciphertext maintenance is carried out. 
 	signal input in[2][l][n]; 
 	signal input w1[n];
@@ -38,4 +38,4 @@ template BenchSimple(l, n, t, q1, q2, q3) {
 	out[1] <== mul[1];
 }
 
-component main {public [in]} = BenchSimple(L, N, T, Q1, Q2, Q3);
+component main {public [in]} = BenchSmall(L, N, T, Q1, Q2, Q3);
