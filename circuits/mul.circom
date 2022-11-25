@@ -16,13 +16,13 @@ template parallel MulPointwise(N, q) {
 	}
 }
 
-template parallel MulsPointwise(L, N, q1, q2, q3) {
-	signal input in1[L][N]; 
-	signal input in2[L][N]; 
-	signal output out[L][N];
+template parallel MulsPointwise(l, N, q1, q2, q3, q4, q5, q6) {
+    var q[6] = [q1, q2, q3, q4, q5, q6];
+	signal input in1[l][N]; 
+	signal input in2[l][N]; 
+	signal output out[l][N];
 	
-	var q[3] = [q1, q2, q3];
-	for (var i = 0; i < L; i++) {
+	for (var i = 0; i < l; i++) {
 		if (q[i] != 0) {
 			out[i] <== MulPointwise(N, q[i])(in1[i], in2[i]);
 		}
@@ -39,28 +39,23 @@ template parallel MulPointwiseNoMod(N) {
 	}
 }
 
-template parallel MulsPointwiseNoMod(L, N) {
-	signal input in1[L][N]; 
-	signal input in2[L][N]; 
-	signal output out[L][N];
+template parallel MulsPointwiseNoMod(l, N) {
+	signal input in1[l][N]; 
+	signal input in2[l][N]; 
+	signal output out[l][N];
 	
-	for (var i = 0; i < L; i++) {
+	for (var i = 0; i < l; i++) {
 		out[i] <== MulPointwiseNoMod(N)(in1[i], in2[i]);
 	}
 }
 
-template parallel MulNTT(L, N, q1, q2, q3) {
-	signal input in1[L][N];
-	signal input in2[L][N];
-	signal output out[L][N];
-	
-	var q[L]; 
-	assert(0 < L && L <= 3);
-	if (L == 1) {q = [q1]; }
-	if (L == 2) {q = [q2]; }
-	if (L == 3) {q = [q3]; }
+template parallel MulNTT(l, N, q1, q2, q3, q4, q5, q6) {
+    var q[6] = [q1, q2, q3, q4, q5, q6];
+	signal input in1[l][N];
+	signal input in2[l][N];
+	signal output out[l][N];
 
-	for (var i = 0; i < L; i++) {
+	for (var i = 0; i < l; i++) {
 		if (q[i] == 0) {
 			// TODO: add explicit constraint that out === 0, or do we discard this in a higher protocol level?
 		} else {
@@ -98,20 +93,20 @@ template parallel MulPolySchoolbook(N, q) {
 }
 
 // Compute assuming both inputs are in NTT form
-template parallel MulCtxtCtxt(l, n, q1, q2, q3) {
+template parallel MulCtxtCtxt(l, n, q1, q2, q3, q4, q5, q6) {
     signal input in1[2][l][n];
     signal input in2[2][l][n];
     signal tmp1[l][n];
     signal tmp2[l][n];
     signal output out[3][l][n];
 
-    out[0] <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[0], in2[0]);
+    out[0] <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in1[0], in2[0]);
 
-    tmp1 <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[0], in2[1]);
-    tmp2 <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[1], in2[0]);
-    out[1] <== parallel FastAddMods(l, n, q1, q2, q3)(tmp1, tmp2);
+    tmp1 <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in1[0], in2[1]);
+    tmp2 <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in1[1], in2[0]);
+    out[1] <== parallel FastAddMods(l, n, q1, q2, q3, q4, q5, q6)(tmp1, tmp2);
 
-    out[2] <== parallel MulsPointwise(l, n, q1, q2, q3)(in1[1], in2[1]);
+    out[2] <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in1[1], in2[1]);
 }
 
 template parallel FastDoubleMod(q) {
@@ -128,11 +123,11 @@ template parallel FastDoubleMod(q) {
     quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
 }
 
-template parallel FastDoubleMods(l, n, q1, q2, q3) {
+template parallel FastDoubleMods(l, n, q1, q2, q3, q4, q5, q6) {
+	var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in[l][n];
 	signal output out[l][n];
 
-	var q[3] = [q1, q2, q3];
 	for (var i = 0; i < l; i++) {
 		for (var j = 0; j < n; j++) {
 			out[i][j] <== parallel FastDoubleMod(q[i])(in[i][j]);
@@ -141,15 +136,15 @@ template parallel FastDoubleMods(l, n, q1, q2, q3) {
 }
 
 // Compute assuming both inputs are in NTT form
-template parallel SquareCtxt(l, n, q1, q2, q3) {
+template parallel SquareCtxt(l, n, q1, q2, q3, q4, q5, q6) {
     signal input in[2][l][n];
     signal tmp[l][n];
     signal output out[3][l][n];
 
-    out[0] <== parallel MulsPointwise(l, n, q1, q2, q3)(in[0], in[0]);
+    out[0] <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in[0], in[0]);
 
-    tmp <== parallel MulsPointwise(l, n, q1, q2, q3)(in[0], in[1]);
-    out[1] <== parallel FastDoubleMods(l, n, q1, q2, q3)(tmp);
+    tmp <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in[0], in[1]);
+    out[1] <== parallel FastDoubleMods(l, n, q1, q2, q3, q4, q5, q6)(tmp);
 
-    out[2] <== parallel MulsPointwise(l, n, q1, q2, q3)(in[1], in[1]);
+    out[2] <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in[1], in[1]);
 }

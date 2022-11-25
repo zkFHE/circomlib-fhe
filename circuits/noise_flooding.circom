@@ -2,7 +2,8 @@ pragma circom 2.1.0;
 
 include "add.circom";
 
-template NoiseFlooding(secparam, deg, l, n, q1, q2, q3) {
+template NoiseFlooding(secparam, deg, l, n, q1, q2, q3, q4, q5, q6) {
+    var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in[deg][l][n]; 
 	signal input noise[secparam][deg][l][n];
 	signal input b[secparam];
@@ -27,12 +28,6 @@ template NoiseFlooding(secparam, deg, l, n, q1, q2, q3) {
 	}
 	
 	// Sum all noisy components
-	var q[l]; 
-	assert(0 < l && l <= 3);
-	if (l == 1) {q = [q1]; }
-	if (l == 2) {q = [q1, q2]; }
-	if (l == 3) {q = [q1, q2, q3]; }
-	
 	for (var i = 0; i < deg; i++) {
 		for (var j = 0; j < l; j++) {
 			for (var k = 0; k < n; k++) {

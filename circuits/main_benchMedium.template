@@ -4,11 +4,12 @@ include "mod.circom";
 include "mul.circom";
 include "noise_flooding.circom";
 
-template BenchMedium(l, n, t, q1, q2, q3) {
+template BenchMedium(l, n, t, q1, q2, q3, q4, q5, q6) {
 	// Compute ModSwitch(Mul((in - w), (in - w))), where in is a ciphertext (in NTT form), and w is a plaintext server inputs.
 	// No relinearization is carried out, but a modulus switching is performed to reduce the size of the output.
 	// This is similar to the computation performed in ORide [PDETHH17](https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-pham.pdf).
 	var secparam = 128;
+	var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in[2][l][n]; 
 	signal input w[n];
 	signal input noise[secparam][3][1][n];
@@ -21,12 +22,6 @@ template BenchMedium(l, n, t, q1, q2, q3) {
 	// Range check for plaintext inputs
 	LtConstantN(t, n)(w);
 
-	var q[L]; 
-	assert(0 < L && L <= 3);
-	if (L == 1) {q = [q1]; }
-	if (L == 2) {q = [q2]; }
-	if (L == 3) {q = [q3]; }
-
 	// diff = Sub(in, w)
 	for (var i = 0; i < l; i++) {
 		// OPTIMIZATION: if t < q[i], there's no need to reduce w modulo q[i] for each CRT component
@@ -38,7 +33,7 @@ template BenchMedium(l, n, t, q1, q2, q3) {
 	diff[1] <== in[1];
 
 	// mul = Mul(diff, diff)
-	mul <== parallel SquareCtxt(l, n, q1, q2, q3)(diff);
+	mul <== parallel SquareCtxt(l, n, q1, q2, q3, q4, q5, q6)(diff);
 	
 	// out = ModSwitchToLast(mul)
 	// OPTIMIZATION: Since we are in CRT representation, we can simply set all higher moduli to zero and only take the first modulus
@@ -50,7 +45,7 @@ template BenchMedium(l, n, t, q1, q2, q3) {
 	}
 	
 
-	flooded <== NoiseFlooding(secparam, 3, 1, n, q1, q2, q3)(out, noise, b); // Only use noise flooding on level 1
+	flooded <== NoiseFlooding(secparam, 3, 1, n, q1, q2, q3, q4, q5, q6)(out, noise, b); // Only use noise flooding on level 1
 }
 
-component main {public [in, noise]} = BenchMedium(L, N, T, Q1, Q2, Q3);
+component main {public [in, noise]} = BenchMedium(L, N, T, Q1, Q2, Q3, Q4, 0, 0);

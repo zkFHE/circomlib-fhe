@@ -1,9 +1,45 @@
 pragma circom 2.1.0;
+pragma custom_templates;
 
 include "util.circom";
 include "rns.circom";
-include "mod.circom";
+//include "mod.circom";
 include "circomlib/circuits/multiplexer.circom";
+include "circomlib/circuits/bitify.circom";
+include "circomlib/circuits/compconstant.circom";
+include "circomlib/circuits/binsum.circom";
+include "util.circom";
+
+
+template parallel LtConstant(ct) {
+	// assert(ct >= 1);
+	signal input in;
+	signal bits[254];
+	signal res;
+
+	bits <== Num2Bits_strict()(in);
+	res <== CompConstant(ct-1)(bits);
+	res === 0;
+}
+
+template parallel LtConstantN(ct, N) {
+	signal input in[N];
+
+	for (var i = 0; i < N; i++) {
+		parallel LtConstant(ct)(in[i]);
+	}
+}
+
+template custom Mod(q) {
+    signal input in;
+    signal output out;
+
+    signal quotient <-- sum \ q; // quotient is either 0 or 1
+    signal output out <-- sum % q;
+    LtConstant(q)(out); // Check that remainder is less than q
+    quotient * q + out === sum; // Check that quotient and remainder are correct
+   	quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
+}
 
 template parallel FastAddMod(q) {
 	signal input in[2]; // both inputs need to be in Z/qZ
@@ -16,12 +52,12 @@ template parallel FastAddMod(q) {
 	quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
 }
 
-template parallel FastAddMods(l, n, q1, q2, q3, q4, q5, q6) {
-    var q[6] = [q1, q2, q3, q4, q5, q6];
+template parallel FastAddMods(l, n, q1, q2, q3) {
 	signal input in1[l][n];
 	signal input in2[l][n];
 	signal output out[l][n];
 
+	var q[l] = [q1, q2, q3];
 	for (var i = 0; i < l; i++) {
 		for (var j = 0; j < n; j++) {
 			out[i][j] <== parallel FastAddMod(q[i])([in1[i][j], in2[i][j]]);
@@ -53,12 +89,12 @@ template parallel FastSubMods(l, n, q) {
 }
 
 
-template parallel SumK(n, k, q, inp_size) {
+template parallel SumK(N, k, q, inp_size) {
 	// assert(q < (1 << 62));
 	assert(k > 1);
-	assert (k <= n);
+	assert (k <= N);
 	
-	signal input in[n]; // only sum first k entries
+	signal input in[N]; // only sum first k entries
 	var aux;
 	signal output out;
 	signal tmp;
@@ -119,25 +155,31 @@ template parallel AddModQ(k, q) {
 	}
 }
 
-template parallel AddPoly(n, q) {
-	signal input in1[n];
-	signal input in2[n];
-	signal output out[n];
+template parallel AddPoly(N, q) {
+	signal input in1[N];
+	signal input in2[N];
+	signal output out[N];
 	
-	for (var i = 0; i < n; i++) {
+	for (var i = 0; i < N; i++) {
 		out[i] <== parallel FastAddMod(q)([in1[i], in2[i]]);
 	}
 }
 
-template parallel AddPolys(l, n, q1, q2, q3, q4, q5, q6) {
-    var q[6] = [q1, q2, q3, q4, q5, q6];
-	signal input in1[l][n];
-	signal input in2[l][n];
-	signal output out[l][n];
-		
-	component add[l];
-	for (var i = 0; i < l; i++) {
-	    add[i] <== parallel AddPoly(n, q[i])(in1, in2);
+template parallel AddPolys(L, N, q1, q2, q3) {
+	signal input in1[L][N];
+	signal input in2[L][N];
+	signal output out[L][N];
+	
+	var q[L] = [q1, q2, q3]; // Workaround, circom does not allow array arguments to templates
+	
+	component add[L];
+	for (var i = 0; i < L; i++) {
+		if (q[i] > 0) { // For parameter choices with less levels, set q_i to 0 and skip circuit generation
+			add[i] = parallel AddPoly(N, q[i]);
+			add[i].in1 <== in1[i];
+			add[i].in2 <== in2[i];
+			add[i].out ==> out[i];
+		}
 	}
 }
 
