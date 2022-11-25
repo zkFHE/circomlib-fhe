@@ -2,16 +2,21 @@ pragma circom 2.1.0;
 
 include "mod.circom";
 include "mul.circom";
+include "noise_flooding.circom";
 
 template BenchMedium(l, n, t, q1, q2, q3) {
 	// Compute ModSwitch(Mul((in - w), (in - w))), where in is a ciphertext (in NTT form), and w is a plaintext server inputs.
 	// No relinearization is carried out, but a modulus switching is performed to reduce the size of the output.
 	// This is similar to the computation performed in ORide [PDETHH17](https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-pham.pdf).
+	var secparam = 128;
 	signal input in[2][l][n]; 
 	signal input w[n];
+	signal input noise[secparam][3][1][n];
+	signal input b[secparam];
 	signal diff[2][l][n];
 	signal mul[3][l][n];
-	signal output out[3][n];
+	signal out[3][1][n];
+	signal output flooded[3][1][n];
 	
 	// Range check for plaintext inputs
 	LtConstantN(t, n)(w);
@@ -39,10 +44,13 @@ template BenchMedium(l, n, t, q1, q2, q3) {
 	// OPTIMIZATION: Since we are in CRT representation, we can simply set all higher moduli to zero and only take the first modulus
 	// We don't bother to have zero outputs for efficiency
 	for (var j = 0; j < n; j++) {
-		out[0][j] <== mul[0][0][j];
-		out[1][j] <== mul[1][0][j];
-		out[2][j] <== mul[2][0][j];
+		out[0][0][j] <== mul[0][0][j];
+		out[1][0][j] <== mul[1][0][j];
+		out[2][0][j] <== mul[2][0][j];
 	}
+	
+
+	flooded <== NoiseFlooding(secparam, 3, 1, n, q1, q2, q3)(out, noise, b); // Only use noise flooding on level 1
 }
 
-component main {public [in]} = BenchMedium(L, N, T, Q1, Q2, Q3);
+component main {public [in, noise]} = BenchMedium(L, N, T, Q1, Q2, Q3);
