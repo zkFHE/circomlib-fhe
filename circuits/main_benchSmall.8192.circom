@@ -28,4 +28,4 @@ template BenchSmall(l, n, t, q1, q2, q3, q4, q5, q6) {
  out[1] <== mul[1];
  flooded <== NoiseFlooding(secparam, 2, l, n, q1, q2, q3, q4, q5, q6)(out, noise, b);
 }
-component main {public [in, noise]} = BenchSmall(3, 8192, 1073692673, 576460752303210497, 1152921504606748673, 1152921504606830593, 0, 0, 0);
+component main {public [in, noise]} = BenchSmall(2, 8192, 1073692673, 576460752303210497, 1152921504606748673, 0, 0, 0, 0);
