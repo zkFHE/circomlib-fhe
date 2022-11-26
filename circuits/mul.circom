@@ -148,3 +148,19 @@ template parallel SquareCtxt(l, n, q1, q2, q3, q4, q5, q6) {
 
     out[2] <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in[1], in[1]);
 }
+
+// Compute assuming both inputs are in NTT form
+template parallel SquareCtxtNoMod(n) {
+    signal input in[2][n];
+    signal tmp[n];
+    signal output out[3][n];
+
+    out[0] <== parallel MulPointwiseNoMod(n)(in[0], in[0]);
+
+    tmp <== parallel MulPointwiseNoMod(n)(in[0], in[1]);
+    for (var i = 0; i < n; i++) {
+        out[1][i] <== 2*tmp[i];
+    }
+
+    out[2] <== parallel MulPointwiseNoMod(n)(in[1], in[1]);
+}
