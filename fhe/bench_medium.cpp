@@ -6,7 +6,8 @@ using namespace std;
 using namespace seal;
 
 
-#define N 8192
+// #define N 8192
+#define N 16384
 #define LOG_T 30
 
 #define SEC_PARAM 128
@@ -19,7 +20,9 @@ int main() {
     parms.set_poly_modulus_degree(poly_modulus_degree);
 
     //parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {45, 45, 45, 45}));
+    if (N == 8192 || N == 16384) {
+        parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {45, 46, 46, 46}));
+    }
     parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, LOG_T));
     SEALContext context(parms);
 
@@ -29,7 +32,7 @@ int main() {
     cout << "[PARAM] Batching enabled: " << boolalpha << qualifiers.using_batching
          << endl;
     cout << "[PARAM] poly_modulus_degree N=" << parms.poly_modulus_degree() << endl;
-    cout << "[PARAM] plain_modulus t=" << parms.plain_modulus().bit_count() << " bits" << endl;
+    cout << "[PARAM] plain_modulus log(t)=" << parms.plain_modulus().bit_count() << " bits" << endl;
     size_t coeff_modulus_bit_count = 0;
     cout << "[PARAM] coeff_modulus log(q)=";
     for (auto q_i: parms.coeff_modulus()) {
@@ -41,6 +44,16 @@ int main() {
     }
     cout << " = " << coeff_modulus_bit_count << " bits" << endl;
     cout << "[PARAM] coeff_modulus.size=" << parms.coeff_modulus().size() << endl;
+
+    cout << "[PARAM] plain_modulus t=" << parms.plain_modulus().value() << endl;
+    cout << "[PARAM] coeff_modulus q=";
+    for (auto q_i: parms.coeff_modulus()) {
+        if (q_i != parms.coeff_modulus()[0]) {
+            cout << " * ";
+        }
+        cout << q_i.value();
+    }
+    cout << endl;
 
     KeyGenerator keygen(context);
     SecretKey secret_key = keygen.secret_key();
@@ -96,11 +109,12 @@ int main() {
     cout << "[TIME][SERVER] Encode\t" << chrono::duration_cast<chrono::microseconds>(end - start).count()
          << " us"
          << endl;
+    cout << "[PARAM] Input ciphertext levels: " << x_encrypted.coeff_modulus_size() << endl;
 
     // Perform computation
     start = chrono::high_resolution_clock::now();
     evaluator.sub_plain_inplace(x_encrypted, w_plain);
-    evaluator.multiply_inplace(x_encrypted, x_encrypted);
+    evaluator.square_inplace(x_encrypted);
     end = chrono::high_resolution_clock::now();
     auto time = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
@@ -148,6 +162,8 @@ int main() {
     cout << "[SPACE] Ciphertext size\t" << size
          << " B"
          << endl;
+
+    cout << "[PARAM] Result ciphertext levels: " << x_encrypted.coeff_modulus_size() << endl;
     cout << endl;
 }
 

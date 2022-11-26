@@ -6,7 +6,8 @@ using namespace std;
 using namespace seal;
 
 
-#define N 8192
+//#define N 8192
+#define N 16384
 #define LOG_T 30
 
 /* // TODO: does not work, ciphertext modulus is not big enough for secure noise flooding
@@ -24,7 +25,9 @@ int main() {
     parms.set_poly_modulus_degree(poly_modulus_degree);
 
     //parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-     parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {59, 59, 60}));
+    if (N == 8192 || N == 16384) {
+        parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {59, 60, 60}));
+    }
     parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, LOG_T));
     SEALContext context(parms);
 
@@ -34,7 +37,7 @@ int main() {
     cout << "[PARAM] Batching enabled: " << boolalpha << qualifiers.using_batching
          << endl;
     cout << "[PARAM] poly_modulus_degree N=" << parms.poly_modulus_degree() << endl;
-    cout << "[PARAM] plain_modulus t=" << parms.plain_modulus().bit_count() << " bits" << endl;
+    cout << "[PARAM] plain_modulus log(t)=" << parms.plain_modulus().bit_count() << " bits" << endl;
     size_t coeff_modulus_bit_count = 0;
     cout << "[PARAM] coeff_modulus log(q)=";
     for (auto q_i: parms.coeff_modulus()) {
@@ -46,6 +49,16 @@ int main() {
     }
     cout << " = " << coeff_modulus_bit_count << " bits" << endl;
     cout << "[PARAM] coeff_modulus.size=" << parms.coeff_modulus().size() << endl;
+
+    cout << "[PARAM] plain_modulus t=" << parms.plain_modulus().value() << endl;
+    cout << "[PARAM] coeff_modulus q=";
+    for (auto q_i: parms.coeff_modulus()) {
+        if (q_i != parms.coeff_modulus()[0]) {
+            cout << " * ";
+        }
+        cout << q_i.value();
+    }
+    cout << endl;
 
     KeyGenerator keygen(context);
     SecretKey secret_key = keygen.secret_key();
