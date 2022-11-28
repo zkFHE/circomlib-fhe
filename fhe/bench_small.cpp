@@ -60,10 +60,14 @@ int main() {
     }
     cout << endl;
 
+    auto start = chrono::high_resolution_clock::now();
     KeyGenerator keygen(context);
     SecretKey secret_key = keygen.secret_key();
     PublicKey public_key;
     keygen.create_public_key(public_key);
+    auto end = chrono::high_resolution_clock::now();
+    auto time = chrono::duration_cast<chrono::microseconds>(end - start).count();
+
     Encryptor encryptor(context, public_key);
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
@@ -73,34 +77,39 @@ int main() {
     size_t slot_count = batch_encoder.slot_count();
     size_t row_size = slot_count / 2;
 
+    start = chrono::high_resolution_clock::now();
+    vector<Ciphertext> zeros_encrypted(SEC_PARAM);
+    vector<uint64_t> zeros(slot_count, 0ULL);
+    Plaintext zero_plain;
+    batch_encoder.encode(zeros, zero_plain);
+    for (int i = 0; i < SEC_PARAM; i++) {
+        encryptor.encrypt(zero_plain, zeros_encrypted[i]);
+    }
+    end = chrono::high_resolution_clock::now();
+    cout << "[TIME][CLIENT] One-time setup\t" << time + chrono::duration_cast<chrono::microseconds>(end - start).count()
+         << " us" << endl;
+
     vector<uint64_t> pod_matrix(slot_count);
     for (size_t i = 0; i < row_size; i++) {
         pod_matrix[i] = (uint64_t) i;
         pod_matrix[row_size + i] = (uint64_t) 3 * i;
     }
 
-    vector<uint64_t> zeros(slot_count, 0ULL);
-
-    auto start = chrono::high_resolution_clock::now();
-    Plaintext x_plain, zero_plain;
+    start = chrono::high_resolution_clock::now();
+    Plaintext x_plain;
     batch_encoder.encode(pod_matrix, x_plain);
-    batch_encoder.encode(zeros, zero_plain);
 
     Ciphertext x_encrypted;
-    vector<Ciphertext> zeros_encrypted(SEC_PARAM);
     encryptor.encrypt(x_plain, x_encrypted);
-    for (int i = 0; i < SEC_PARAM; i++) {
-        encryptor.encrypt(zero_plain, zeros_encrypted[i]);
-    }
-    auto end = chrono::high_resolution_clock::now();
+    end = chrono::high_resolution_clock::now();
 
 
     cout << "[NOISE] Noise budget in freshly encrypted x: " << decryptor.invariant_noise_budget(x_encrypted) << " bits"
          << endl;
-    cout << "[NOISE] Fresh encryption noise: " << coeff_modulus_bit_count - decryptor.invariant_noise_budget(x_encrypted) << " bits"
+    cout << "[NOISE] Fresh encryption noise: "
+         << coeff_modulus_bit_count - decryptor.invariant_noise_budget(x_encrypted) << " bits"
          << endl;
 
-    cout << "=======================================" << endl;
     cout << "[TIME][CLIENT] Encode+Encrypt\t" << chrono::duration_cast<chrono::microseconds>(end - start).count()
          << " us"
          << endl;
@@ -119,7 +128,7 @@ int main() {
     evaluator.multiply_plain_inplace(x_encrypted, w1_plain);
     evaluator.add_plain_inplace(x_encrypted, w2_plain);
     end = chrono::high_resolution_clock::now();
-    auto time = chrono::duration_cast<chrono::microseconds>(end - start).count();
+    time = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
     const auto noise_budget_before_noise_flooding = decryptor.invariant_noise_budget(x_encrypted);
     cout << "[NOISE] Noise budget before noise flooding: " << decryptor.invariant_noise_budget(x_encrypted) << " bits"
