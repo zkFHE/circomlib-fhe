@@ -1,6 +1,6 @@
 ---
 
-instance_type: t2.medium
+instance_type: m5.xlarge
 ec2_volume_size: 16
 
 ec2_image_id:  ami-00648c36e527032ec
