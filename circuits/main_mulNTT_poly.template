@@ -1,5 +1,0 @@
-pragma circom 2.1.0;
-
-include "mul.circom";
-
-component main {public [in1, in2]} = MulNTT(L, N, Q1, Q2, Q3);

@@ -27,14 +27,14 @@ function size_mul(s1, s2) {
 	return s1 + s2;
 }
 
-template parallel NTT(N, q) {
-	signal input values[N];
-	var aux[N];
-	var size[N];
-	signal output out[N];
-	var roots[N]; // TODO: hard-code? C pre-processor? Making this a signal might make the circuit bigger than needed. Fill with dummy data for now
+template parallel NTT(n, q) {
+	signal input values[n];
+	var aux[n];
+	var size[n];
+	signal output out[n];
+	var roots[n]; // TODO: hard-code? C pre-processor? Making this a signal might make the circuit bigger than needed. Fill with dummy data for now
 	roots[0] = 1;
-	for (var i = 1; i < N; i++) {
+	for (var i = 1; i < n; i++) {
 		roots[i] = roots[i-1] * 34;
 	}
 	
@@ -45,11 +45,11 @@ template parallel NTT(N, q) {
 	
 	var gap = 1;
 	var inp_size = log2(q);
-	var size_r = log2(roots[N-1]); // TODO: check if this is a static upper bound
+	var size_r = log2(roots[n-1]); // TODO: check if this is a static upper bound
 	var size_max = 252; // TODO: check how much
 	
 	
-	for (var i = 0; i < N; i++) {
+	for (var i = 0; i < n; i++) {
 		aux[i] = values[i];
 		size[i] = inp_size;
 	}
@@ -58,7 +58,7 @@ template parallel NTT(N, q) {
 	var x_idx;
 	var y_idx;
 
-	for (var m = N >> 1; m > 1; m >>= 1) {
+	for (var m = n >> 1; m > 1; m >>= 1) {
 		var offset = 0;
 		if (gap < 4) {
 			for (var i = 0; i < m; i++) {
@@ -312,7 +312,7 @@ template parallel NTT(N, q) {
 		}
 		
 	// Final reduction mod q
-	for (var i = 0; i < N; i++) {
+	for (var i = 0; i < n; i++) {
 		if (size[i] < log2(q)) {
 			out[i] <== aux[i];
 		} else {
@@ -324,29 +324,28 @@ template parallel NTT(N, q) {
 	*/
 }
 
-template NTTs(L, N, q1, q2, q3) {
-	signal input in[L][N];
-	signal output out[L][N];
+template NTTs(l, n, q1, q2, q3, q4, q5, q6) {
+    var q[6] = [q1, q2, q3, q4, q5, q6];
+	signal input in[l][n];
+	signal output out[l][n];
 	
-	var q[L] = [q1, q2, q3]; 
-	
-	for (var i = 0; i < L; i++) {
+	for (var i = 0; i < l; i++) {
 		if (q[i] > 0) { // For parameter choices with less levels, set q_i to 0 and skip circuit generation
-			out[i] <== parallel NTT(N, q[i])(in[i]);
+			out[i] <== parallel NTT(n, q[i])(in[i]);
 		}
 	}
 }
 
-template INTT(N, q) {
-	signal input in[N]; 
-	signal output out[N];
+template INTT(n, q) {
+	signal input in[n]; 
+	signal output out[n];
 	
-	out <== NTT(N, q)(in); // TODO: add real implementation, but this has roughly the same complexity
+	out <== NTT(n, q)(in); // TODO: add real implementation, but this has roughly the same complexity
 }
 
-template INTTs(L, N, q1, q2, q3) {
-	signal input in[L][N]; 
-	signal output out[L][N];
+template INTTs(l, n, q1, q2, q3, q4, q5, q6) {
+	signal input in[l][n]; 
+	signal output out[l][n];
 	
-	out <== NTTs(L, N, q1, q2, q3)(in); // TODO: add real implementation, but this has roughly the same complexity
+	out <== NTTs(l, n, q1, q2, q3, q4, q5, q6)(in); // TODO: add real implementation, but this has roughly the same complexity
 }

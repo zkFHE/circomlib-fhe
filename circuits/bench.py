@@ -16,7 +16,8 @@ def parse(out):
                 parsed[pre] = int(line[len(pre)+2:])
     return parsed
 
-    cmd = f"circom --r1cs --wasm --c -o out/ {main}"
+def circom(main):
+    cmd = f"circom --r1cs --wasm --O2 -o out/ {main}"
     # print(cmd)
     res = subprocess.run(cmd, capture_output=True, env={"PATH": os.environ["PATH"]}, shell=True, text=True)
     if res.returncode != 0:

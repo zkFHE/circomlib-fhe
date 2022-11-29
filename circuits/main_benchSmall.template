@@ -2,26 +2,26 @@ pragma circom 2.1.0;
 
 include "mod.circom";
 include "mul.circom";
+include "noise_flooding.circom";
 
-template BenchSimple(l, n, t, q1, q2, q3) {
+template BenchSmall(l, n, t, q1, q2, q3, q4, q5, q6) {
 	// Compute AddPlain(MulPlain(in1, w1), w2), where in1 is a ciphertext (in NTT form), and w1, w2 are plaintext server inputs; no ciphertext maintenance is carried out. 
+	var secparam = 128;
+	var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in[2][l][n]; 
+	signal input noise[secparam][2][l][n];
 	signal input w1[n];
 	signal input w2[n];
+	signal input b[secparam];
 	signal mul[2][l][n];
-	signal output out[2][l][n];
+	signal out[2][l][n];
+	signal output flooded[2][l][n];
 	
 	// Range check for plaintext inputs
 	LtConstantN(t, n)(w1);
 	LtConstantN(t, n)(w2);
 	
 	// mul = MulPlain(in, w1)
-	var q[L]; 
-	assert(0 < L && L <= 3);
-	if (L == 1) {q = [q1]; }
-	if (L == 2) {q = [q2]; }
-	if (L == 3) {q = [q3]; }
-	
 	for (var i = 0; i < l; i++) {
 		// OPTIMIZATION: if t < q[i], there's no need to reduce w modulo q[i] for each CRT component
 		assert(t < q[i]); 
@@ -36,6 +36,8 @@ template BenchSimple(l, n, t, q1, q2, q3) {
 		}
 	}
 	out[1] <== mul[1];
+	
+	flooded <== NoiseFlooding(secparam, 2, l, n, q1, q2, q3, q4, q5, q6)(out, noise, b);
 }
 
-component main {public [in]} = BenchSimple(L, N, T, Q1, Q2, Q3);
+component main {public [in, noise]} = BenchSmall(L, N, T, Q1, Q2, Q3, 0, 0, 0);
