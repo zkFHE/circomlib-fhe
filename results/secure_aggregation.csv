@@ -1,0 +1,3 @@
+approach,size,setup_time,proof_time,verifier_time
+EC_ZKP,192,209.09,32.23,0.002
+RLWE_ZKP,192,530.20,59.00,0.002
