@@ -1,0 +1,61 @@
+pragma circom 2.1.0;
+
+include "mod.circom";
+include "mul.circom";
+
+// Range proofs on each input, range proof on secret key and error, encryption of inputs, encryption of 0
+template RLWE_ZKP(n, t, q1, q2, q3) {
+    var l = 3;
+    var q[l] = [q1, q2, q3];
+	signal input in[n];
+	signal input sk[n];
+	signal input a_in[l][n];
+	signal input a_cons[l][n];
+	signal input err_in[l][n];
+	signal input err_cons[l][n];
+	
+	signal tmp[n];
+	signal tmp2[n];
+ 
+	signal output out_in[2][l][n];
+	signal output out_cons[2][l][n];
+
+	// Range checks	
+	LtConstantN((1<<8), n)(in);	// Range check for inputs
+	for (var i = 0; i < n; i++) {
+		tmp[i] <== sk[i] * (sk[i]-1); // tmp == 0 <=> sk == 0 || sk == 1
+		tmp2[i] <== tmp[i] * (sk[i]+1); // tmp2 == 0 <=> sk \in {-1, 0, 1}
+		tmp2[i] === 0;
+	}
+
+	for (var j = 0; j < l; j++) {
+	    LtConstantN(128 \ q[j], n)(err_in[j]);	// Range check for error
+        LtConstantN(128 \ q[j], n)(err_cons[j]);	// Range check for error
+
+        LtConstantN(q[j], n)(a_in[j]);
+        LtConstantN(q[j], n)(a_cons[j]);
+    }
+	
+
+	// Encryption of inputs
+	// Symmetric encryption using BGV: (c[0], c[1]) = ([-(as+te)]_q, a)
+	signal unreduced_in[l][n];
+	for (var i = 0; i < n; i++) {
+	    for (var j = 0; j < l; j++) {
+            unreduced_in[j][i] <== -a_in[j][i] * sk[i] - t * err_in[j][i] + in[i];
+            out_in[0][j][i] <== parallel Mod(q[j])(unreduced_in[j][i]);
+            out_in[1][j][i] <== a_in[j][i];
+        }
+	}
+
+	signal unreduced_cons[l][n];
+	for (var i = 0; i < n; i++) {
+	    for (var j = 0; j < l; j++) {
+            unreduced_cons[j][i] <== -a_cons[j][i] * sk[i] - t * err_cons[j][i];
+            out_cons[0][j][i] <== parallel Mod(q[j])(unreduced_cons[j][i]);
+            out_cons[1][j][i] <== a_cons[j][i];
+		}
+	}
+}
+
+component main = RLWE_ZKP(N, 4079617, 18014398507892737, 18014398508138497, 18014398508400641);

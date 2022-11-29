@@ -1,0 +1,36 @@
+pragma circom 2.1.0;
+
+include "mod.circom";
+include "mul.circom";
+include "circomlib/circuits/pedersen.circom";
+include "circomlib/circuits/babyjub.circom";
+
+// Range proofs on each input, proof of Pedersen commitment to w_i, to s_i, to s_i (using other base), of product g^{w_i} * h^{s_i}
+template EC_ZKP(n) {
+	signal input in[n];
+	signal input sk[n];
+	signal output out_in[n][2];
+	signal output out_cons[n][2];
+
+	// Range checks	
+	// LtConstantN((1<<8), n)(in);	// Range check for inputs
+
+	// Encryption of inputs
+	signal bits_in[n][8];
+	signal bits_sk[n][254];
+	signal tmp[n][2];
+	signal tmp2[n][2];
+	// OPTIMIZATION: skip range check and use bit-decomp instead? Or at least reuse bit-decomp?
+	for (var i = 0; i < n; i++) {
+	    bits_in[i] <== Num2Bits(8)(in[i]);
+	    bits_sk[i] <== Num2Bits(254)(sk[i]);
+
+	    tmp[i] <== Pedersen(8)(bits_in[i]);
+	    tmp2[i] <== Pedersen(254)(bits_sk[i]); // TODO: this should use another base, but this doesn't matter for benchmarking
+	    (out_in[i][0], out_in[i][1]) <== BabyAdd()(tmp[i][0], tmp[i][1], tmp2[i][0], tmp2[i][1]);
+
+	    out_cons[i] <== Pedersen(254)(bits_sk[i]);
+	}
+}
+
+component main = EC_ZKP(N);
