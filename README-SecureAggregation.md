@@ -16,8 +16,9 @@ This setup assumes that the clients already have a share of the collective secre
 HE parameters: 
 - \#values $n = 2^{13} = 8192 \text{ bits}$
 - Range check for $L_\infty = 8 \text{ bits}$
-- Plaintext modulus $log_2(t) = log_2(n) + 8 \text{ bits} = 21 \text{ bits}$ 
-- Ciphertext modulus $log_2(q) = 218 bits \ge log_2(n) + log_2(t) + \text{fresh encryption noise size} + \text{noise flooding size}$
+- Plaintext modulus $log_2(t) > log_2(n) + 8 \text{ bits} = 21 \text{ bits}$ 
+- Ciphertext modulus $log_2(q) = 162 bits \ge log_2(n) + log_2(t) + \text{noise flooding size} = 13 + 21 + 128$
 - HE polynomial degree $N = 2^{13} = 8192 \text{ bits}$ (secure for $q$ as above, this is not directly related to $n$) 
+- Security level (cf. [Homomorphic Encryption Standard](https://homomorphicencryption.org/wp-content/uploads/2018/11/HomomorphicEncryptionStandardv1.1.pdf)) $128 < \lambda < 192$
 
 ## EC-based HE + zkSNARKs
