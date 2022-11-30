@@ -7,6 +7,15 @@ include "util.circom";
 
 
 template parallel LtConstant(ct) {
+	signal input in;
+	signal res;
+	
+	var n = log2(ct);
+
+	component n2b = Num2Bits(n+1);
+	n2b.in <== in+ (1<<n) - ct;
+	1-n2b.out[n] === 1;	
+/*
 	// assert(ct >= 1);
 	signal input in;
 	signal bits[254];
@@ -15,6 +24,7 @@ template parallel LtConstant(ct) {
 	bits <== Num2Bits_strict()(in);
 	res <== CompConstant(ct-1)(bits);
 	res === 0;
+*/
 }
 
 template parallel LtConstantN(ct, N) {
