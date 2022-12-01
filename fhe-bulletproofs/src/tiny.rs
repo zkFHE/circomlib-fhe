@@ -6,15 +6,15 @@ extern crate test;
 
 use bulletproofs::{BulletproofGens, PedersenGens};
 use bulletproofs::r1cs::*;
-use curve25519_dalek::ristretto::CompressedRistretto;
+
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
-use rand::thread_rng;
+
 
 use crate::gadgets::*;
-use crate::gadgets::Ctxt;
+
 use crate::utils::*;
-use crate::values::{AllocatedQuantity, AllocatedScalar};
+
 
 struct TinyProof(R1CSProof);
 
@@ -45,11 +45,11 @@ impl TinyProof {
 
         let mut prover = Prover::new(&pc_gens, transcript);
 
-        let mut rng = rand::thread_rng();
+        let _rng = rand::thread_rng();
 
         assert_eq!(in_l.len(), 2);
-        let l = in_l[0].len();
-        let n = in_l[0][0].len();
+        let _l = in_l[0].len();
+        let _n = in_l[0][0].len();
 
         TinyProof::gadget(&mut prover, params, in_l, in_r, out)?;
 
@@ -74,8 +74,8 @@ impl TinyProof {
 
         let mut verifier = Verifier::new(transcript);
 
-        let l = in_l[0].len();
-        let n = in_l[0][0].len();
+        let _l = in_l[0].len();
+        let _n = in_l[0][0].len();
 
         TinyProof::gadget(&mut verifier, params, in_l, in_r, out)?;
 
@@ -105,7 +105,7 @@ fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Sca
 
     let n: usize = 8192;
     let qs = vec![(1u64 << 45), (1u64 << 45), (1u64 << 45)];
-    let t = (1u64 << 21);
+    let t = 1u64 << 21;
 
     (c1, c2, outputs, pc_gens, bp_gens, FHEParams::new(n, &qs, t, 0, 0, None))
 }

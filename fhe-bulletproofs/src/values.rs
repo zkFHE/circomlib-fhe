@@ -1,12 +1,12 @@
-use core::borrow::BorrowMut;
 
-use bulletproofs::r1cs::{ConstraintSystem, Prover, R1CSError, Variable, Verifier};
-use curve25519_dalek::ristretto::CompressedRistretto;
+
+use bulletproofs::r1cs::{Variable};
+
 use curve25519_dalek::scalar::Scalar;
-use merlin::Transcript;
-use rand::{CryptoRng, Rng};
 
-use crate::signed_integer::SignedInteger;
+
+
+
 
 //////////////////////////////////
 

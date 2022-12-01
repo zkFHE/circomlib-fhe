@@ -1,4 +1,5 @@
 #![feature(test)]
+#![allow(dead_code)]
 
 mod tiny;
 mod range_proof;
@@ -10,7 +11,7 @@ mod utils;
 mod medium;
 
 use std::env;
-use std::io::Error;
+
 use std::process::ExitCode;
 use tiny::main_tiny;
 use crate::medium::main_medium;

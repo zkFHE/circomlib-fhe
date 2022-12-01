@@ -3,16 +3,16 @@ extern crate curve25519_dalek;
 extern crate merlin;
 extern crate rand;
 
-use bulletproofs::{BulletproofGens, PedersenGens};
-use bulletproofs::r1cs::*;
-use curve25519_dalek::ristretto::CompressedRistretto;
-use curve25519_dalek::scalar::Scalar;
-use merlin::Transcript;
-use rand::thread_rng;
 
-use crate::range_proof::{lt_constant, mod_gate, mod_scalar, range_proof};
+use bulletproofs::r1cs::*;
+
+use curve25519_dalek::scalar::Scalar;
+
+
+
+use crate::range_proof::{lt_constant, mod_gate, mod_scalar};
 use crate::utils::FHEParams;
-use crate::values::{AllocatedQuantity, AllocatedScalar};
+use crate::values::{AllocatedScalar};
 
 pub(crate) type Poly = Vec<AllocatedScalar>;
 pub(crate) type RNSPoly = Vec<Poly>;
@@ -36,7 +36,7 @@ pub fn sum_mod<CS: ConstraintSystem>(cs: &mut CS,
         lincomb = lincomb + LinearCombination::from(vars[ii].variable) * constants[ii];
     }
     // TODO: add mod-q gate
-    let mut out_assignment = if vars[0].assignment.is_some() {
+    let out_assignment = if vars[0].assignment.is_some() {
         let mut res = Scalar::zero();
         for ii in 0..n {
             res += mod_scalar(vars[ii].assignment.unwrap() * constants[ii], q);
@@ -177,7 +177,7 @@ pub fn mul_ctxt_ptxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l
     Ok(out)
 }
 
-pub fn add_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT, q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
+pub fn add_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT, _q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
     assert_eq!(in_l[0].len(), in_r.len());
     assert_eq!(in_l[0][0].len(), in_r[0].len());
@@ -190,7 +190,7 @@ pub fn add_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &Ptxt
     Ok(out)
 }
 
-pub fn sub_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT, q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
+pub fn sub_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT, _q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
     assert_eq!(in_l[0].len(), in_r.len());
     assert_eq!(in_l[0][0].len(), in_r[0].len());
@@ -258,8 +258,8 @@ pub fn mul_ctxt_ctxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l
     assert_eq!(in_l.len(), in_r.len());
     assert_eq!(in_l[0].len(), in_r[0].len());
     assert_eq!(in_l[0][0].len(), in_r[0][0].len());
-    let l = in_l[0].len();
-    let n = in_l[0][0].len();
+    let _l = in_l[0].len();
+    let _n = in_l[0][0].len();
 
     let tmp1 = mul_poly(cs, &in_l[0], &in_r[1], &params.q)?;
     let tmp2 = mul_poly(cs, &in_l[1], &in_r[0], &params.q)?;
@@ -288,10 +288,10 @@ pub fn square_ctxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l: 
     Ok(out)
 }
 
-pub fn mod_switch<CS: ConstraintSystem>(cs: &mut CS, ctxt: &Ctxt) -> Result<Ctxt, R1CSError> {
+pub fn mod_switch<CS: ConstraintSystem>(_cs: &mut CS, ctxt: &Ctxt) -> Result<Ctxt, R1CSError> {
     let deg = ctxt.len();
     let l = ctxt[0].len();
-    let n = ctxt[0][0].len();
+    let _n = ctxt[0][0].len();
     let mut out: Ctxt = Vec::with_capacity(deg);
     for k in 0..deg {
         out.push(Vec::with_capacity(l - 1));
@@ -350,8 +350,8 @@ pub fn mul_ctxt_ctxt_pub<CS: ConstraintSystem>(cs: &mut CS,
 ) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
     assert_eq!(in_r.len(), 2);
-    let l = in_l[0].len();
-    let n = in_l[0][0].len();
+    let _l = in_l[0].len();
+    let _n = in_l[0][0].len();
     let q = &params.q;
 
     let tmp1 = mul_poly_pub(cs, &in_l[0], &in_r[1], &q)?;

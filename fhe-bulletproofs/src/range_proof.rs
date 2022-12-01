@@ -2,12 +2,12 @@ use std::ops::{Div, Rem};
 
 use bulletproofs::r1cs::{ConstraintSystem, LinearCombination, R1CSError};
 use curve25519_dalek::scalar::Scalar;
-use num_bigint::*;
-use num_bigint::BigUint;
-use rand::Fill;
 
-use crate::signed_integer::SignedInteger;
-use crate::values::{AllocatedQuantity, AllocatedScalar};
+use num_bigint::BigUint;
+
+
+
+use crate::values::{AllocatedScalar};
 
 pub fn scalar_2_u64(x: Scalar) -> u64 {
     let bytes = x.to_bytes();
@@ -49,7 +49,7 @@ pub fn mod_scalar(a: Scalar, b: Scalar) -> Scalar {
 /// Enforces that v % ct = remainder
 pub fn mod_gate<CS: ConstraintSystem>(
     cs: &mut CS,
-    mut v: LinearCombination,
+    v: LinearCombination,
     v_assignment: Option<Scalar>,
     ct: Scalar,
 ) -> Result<AllocatedScalar, R1CSError> {

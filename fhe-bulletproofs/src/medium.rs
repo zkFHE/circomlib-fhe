@@ -9,12 +9,12 @@ use bulletproofs::r1cs::*;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
-use rand::thread_rng;
+
 
 use crate::gadgets::*;
-use crate::gadgets::Ctxt;
+
 use crate::utils::*;
-use crate::values::{AllocatedQuantity, AllocatedScalar};
+use crate::values::{AllocatedScalar};
 
 struct MediumProof(R1CSProof);
 
@@ -74,7 +74,7 @@ impl MediumProof {
 
 
         assert_eq!(in_1.len(), 2);
-        let l = in_1[0].len();
+        let _l = in_1[0].len();
         let n = in_1[0][0].len();
 
         let mut in_2_vars: Ptxt = Vec::with_capacity(n);
@@ -139,7 +139,7 @@ impl MediumProof {
 fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
     let n: usize = 1;
     let qs = vec![(1u64 << 45), (1u64 << 45), (1u64 << 45)];
-    let t = (1u64 << 21);
+    let t = 1u64 << 21;
     let params = FHEParams::new(n, &qs, t, 2, 3, Some(33));
 
     let in1 = new_ctxt(&params, 2);

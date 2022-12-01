@@ -1,6 +1,6 @@
 use curve25519_dalek::scalar::Scalar;
 
-use crate::gadgets::Ctxt;
+
 
 pub struct FHEParams {
     pub(crate) n: usize,
@@ -60,7 +60,7 @@ impl FHEParams {
                 let mut curr_root = 1u64;
                 for i in 0..n {
                     table.push(Vec::with_capacity(n));
-                    for j in 0..n {
+                    for _j in 0..n {
                         table[i].push(Scalar::from(curr_root));
                         curr_root = (curr_root * root.unwrap()) % q[0];
                     }
@@ -79,7 +79,7 @@ pub fn new_ctxt(params: &FHEParams, deg: usize) -> Vec<Vec<Vec<Scalar>>> {
         ctxt.push(Vec::with_capacity(params.q.len()));
         for i in 0..params.q.len() {
             ctxt[k].push(Vec::with_capacity(params.n));
-            for j in 0..params.n {
+            for _j in 0..params.n {
                 ctxt[k][i].push(Scalar::zero());
             }
         }
@@ -89,7 +89,7 @@ pub fn new_ctxt(params: &FHEParams, deg: usize) -> Vec<Vec<Vec<Scalar>>> {
 
 pub fn new_ptxt(params: &FHEParams) -> Vec<Scalar> {
     let mut ptxt: Vec<Scalar> = Vec::with_capacity(params.n);
-    for j in 0..params.n {
+    for _j in 0..params.n {
         ptxt.push(Scalar::zero());
     }
     ptxt
