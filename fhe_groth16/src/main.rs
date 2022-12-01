@@ -1,12 +1,16 @@
+use std::cmp::max;
 use ark_bn254::Bn254;
 use ark_circom::*;
+use ark_ec::PairingEngine;
 use ark_groth16::prepare_verifying_key;
-use clap::{Arg, ArgAction::Append, Command, value_parser};
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem, OptimizationGoal, SynthesisMode};
+use clap::{Arg, ArgAction::Append, Command, Parser, value_parser};
 use num_bigint::ToBigInt;
 use rand::thread_rng;
 use crate::groth16::*;
 
 mod groth16;
+
 
 fn main() {
     let args = Command::new("ark-circom-fhe")
@@ -75,7 +79,6 @@ fn main() {
     // Check that the proof is valid
     let pvk = prepare_verifying_key(&params.vk);
     let verified = verify(&pvk, &proof, &inputs).unwrap();
-
     println!("{verified}");
     assert!(verified);
 }

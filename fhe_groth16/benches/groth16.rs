@@ -1,7 +1,7 @@
 use ark_bn254::Bn254;
 use ark_circom::*;
 use ark_groth16::prepare_verifying_key;
-use criterion::{BatchSize, BenchmarkId, black_box, Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use num_bigint::ToBigInt;
 use rand::thread_rng;
 
@@ -17,15 +17,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let cfg = CircomConfig::<Bn254>::new(wasm, r1cs).unwrap();
     let mut builder = CircomBuilder::new(cfg);
     for input in inputs {
-        if (input == "in") {
-        for i in 0..n {
-            builder.push_input(input, 0.to_bigint().unwrap());
-            builder.push_input(input, 0.to_bigint().unwrap());
-        }
+        if input == "in" {
+            for _ in 0..n {
+                builder.push_input(input, 0.to_bigint().unwrap());
+                builder.push_input(input, 0.to_bigint().unwrap());
+            }
         } else {
-        for i in 0..n {
-            builder.push_input(input, 0.to_bigint().unwrap());
-        }
+            for _ in 0..n {
+                builder.push_input(input, 0.to_bigint().unwrap());
+            }
         }
     }
 
