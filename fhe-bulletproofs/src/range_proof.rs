@@ -53,14 +53,14 @@ pub fn mod_gate<CS: ConstraintSystem>(
     v_assignment: Option<Scalar>,
     ct: Scalar,
 ) -> Result<AllocatedScalar, R1CSError> {
-    let P = Scalar::from_bits([0xff; 32]);
+    let p = Scalar::from_bits([0xff; 32]);
     let quotient_assignment = v_assignment.map(|x| div_scalar(x, ct));
     let quotient = cs.allocate(quotient_assignment)?;
 
     let remainder_assignment = v_assignment.map(|x| mod_scalar(x.into(), ct));
     let remainder = cs.allocate(remainder_assignment)?;
 
-    lt_constant(cs, LinearCombination::from(quotient), quotient_assignment, Scalar::from(div_scalar(P, ct)))?;
+    lt_constant(cs, LinearCombination::from(quotient), quotient_assignment, Scalar::from(div_scalar(p, ct)))?;
     lt_constant(cs, LinearCombination::from(remainder), remainder_assignment, ct)?;
 
     cs.constrain(ct * quotient + remainder - v); // v = ct * quotient + remainder
@@ -84,7 +84,6 @@ pub fn lt_constant<CS: ConstraintSystem>(
 
     range_proof(cs, lincomb, assignment, bit_size + 1)
 }
-
 
 pub fn range_proof<CS: ConstraintSystem>(
     cs: &mut CS,
