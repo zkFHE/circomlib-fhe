@@ -13,7 +13,7 @@ template parallel LtConstant(ct) {
 	var n = log2(ct);
 
 	component n2b = Num2Bits(n+1);
-	n2b.in <== in+ (1<<n) - ct;
+	n2b.in <== in + (1<<n) - ct;
 	1-n2b.out[n] === 1;	
 /*
 	// assert(ct >= 1);
