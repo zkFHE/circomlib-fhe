@@ -125,6 +125,17 @@ pub fn mul_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Vec<Vec<AllocatedScala
     Ok(out)
 }
 
+pub fn mul_pubctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, params: &FHEParams, in_l: &PubCtxt, in_r: &PtxtNTT) -> Result<Ctxt, R1CSError> {
+    assert_eq!(in_l.len(), 2);
+
+    let out = vec![
+        mul_poly_pub_priv(cs, &in_l[0], &in_r, &params.q)?,
+        mul_poly_pub_priv(cs, &in_l[1], &in_r, &params.q)?,
+    ];
+
+    Ok(out)
+}
+
 pub fn mul_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
 
@@ -183,11 +194,30 @@ pub fn mul_poly_pub<CS: ConstraintSystem>(cs: &mut CS, in_l: &PubRNSPoly, in_r: 
     Ok(out)
 }
 
+pub fn mul_poly_pub_priv<CS: ConstraintSystem>(cs: &mut CS, in_l: &PubRNSPoly, in_r: &RNSPoly, q: &Vec<Scalar>) -> Result<RNSPoly, R1CSError> {
+    let l = in_l.len();
+    let n = in_l[0].len();
+
+    let mut out: Vec<Vec<AllocatedScalar>> = Vec::with_capacity(l);
+    for i in 0..l {
+        out.push(Vec::with_capacity(n));
+        sum_mod(cs, in_r[i].as_ref(), in_l[i].as_ref(), q[i])?;
+
+        // for j in 0..n {
+        //     let out_assignment = Some(in_l[i][j] * in_r[i][j]);
+        //     let out_var = cs.allocate(out_assignment)?;
+        //     let reduced = mod_gate(cs, LinearCombination::from(out_var), out_assignment, q[i])?;
+        //     out[i].push(reduced);
+        // }
+    }
+    Ok(out)
+}
+
 pub fn mul_ctxt_ctxt_pub<CS: ConstraintSystem>(cs: &mut CS,
                                                params: &FHEParams,
                                                in_l: &PubCtxt,
                                                in_r: &PubCtxt,
-                                              ) -> Result<Ctxt, R1CSError> {
+) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
     assert_eq!(in_r.len(), 2);
     let l = in_l[0].len();
