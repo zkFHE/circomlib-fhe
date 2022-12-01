@@ -7,11 +7,13 @@ mod signed_integer;
 mod gadgets;
 mod small;
 mod utils;
+mod medium;
 
 use std::env;
 use std::io::Error;
 use std::process::ExitCode;
 use tiny::main_tiny;
+use crate::medium::main_medium;
 use crate::small::main_small;
 
 
@@ -25,6 +27,7 @@ fn main() -> ExitCode {
     match &name[..] {
         "tiny" => main_tiny(),
         "small" => main_small(),
+        "medium" => main_medium(),
         x => {
             println!("Unknown setting `{x}'");
             return ExitCode::FAILURE
