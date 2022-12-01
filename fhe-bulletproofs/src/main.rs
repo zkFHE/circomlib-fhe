@@ -12,6 +12,7 @@ use std::env;
 use std::io::Error;
 use std::process::ExitCode;
 use tiny::main_tiny;
+use crate::small::main_small;
 
 
 fn main() -> ExitCode {
@@ -23,6 +24,7 @@ fn main() -> ExitCode {
     let name = &args[1];
     match &name[..] {
         "tiny" => main_tiny(),
+        "small" => main_small(),
         x => {
             println!("Unknown setting `{x}'");
             return ExitCode::FAILURE

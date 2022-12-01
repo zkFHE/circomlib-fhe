@@ -107,7 +107,7 @@ fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Sca
     let qs = vec![(1u64 << 45), (1u64 << 45), (1u64 << 45)];
     let t = (1u64 << 21);
 
-    (c1, c2, outputs, pc_gens, bp_gens, FHEParams::new(n, &qs, t, 0, None))
+    (c1, c2, outputs, pc_gens, bp_gens, FHEParams::new(n, &qs, t, 0, 0, None))
 }
 
 #[cfg(test)]

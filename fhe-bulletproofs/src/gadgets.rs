@@ -77,7 +77,7 @@ pub fn valid_ptxt<CS: ConstraintSystem>(cs: &mut CS, ptxt: &Ptxt) -> Result<(), 
     Ok(())
 }
 
-pub fn add_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Vec<Vec<AllocatedScalar>>, in_r: &Vec<Vec<AllocatedScalar>>) -> Result<Vec<Vec<AllocatedScalar>>, R1CSError> {
+pub fn add_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPoly) -> Result<RNSPoly, R1CSError> {
     let q_int: u64 = 17;
     let q: Scalar = Scalar::from(q_int);
 
@@ -100,9 +100,9 @@ pub fn add_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Vec<Vec<AllocatedScala
     Ok(out)
 }
 
-pub fn mul_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Vec<Vec<AllocatedScalar>>, in_r: &Vec<Vec<AllocatedScalar>>) -> Result<Vec<Vec<AllocatedScalar>>, R1CSError> {
-    let q_int: u64 = 17;
-    let q: Scalar = Scalar::from(q_int);
+pub fn mul_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPoly, q: &Vec<Scalar>) -> Result<RNSPoly, R1CSError> {
+    assert_eq!(in_l.len(), in_r.len());
+    assert_eq!(in_l[0].len(), in_r[0].len());
 
     let l = in_l.len();
     let n = in_l[0].len();
@@ -118,7 +118,7 @@ pub fn mul_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Vec<Vec<AllocatedScala
                 (_, _) => None
             };
 
-            let reduced = mod_gate(cs, LinearCombination::from(out_var), out_assignment, q)?;
+            let reduced = mod_gate(cs, LinearCombination::from(out_var), out_assignment, q[i])?;
             out[i].push(reduced);
         }
     }
@@ -127,21 +127,28 @@ pub fn mul_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Vec<Vec<AllocatedScala
 
 pub fn mul_pubctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, params: &FHEParams, in_l: &PubCtxt, in_r: &PtxtNTT) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
+    assert_eq!(in_l[0].len(), in_r.len());
+    assert_eq!(in_l[0][0].len(), in_r[0].len());
 
     let out = vec![
         mul_poly_pub_priv(cs, &in_l[0], &in_r, &params.q)?,
         mul_poly_pub_priv(cs, &in_l[1], &in_r, &params.q)?,
     ];
 
+    assert_eq!(out.len(), in_l.len());
+    assert_eq!(out[0].len(), in_l[0].len());
+    assert_eq!(out[0][0].len(), in_l[0][0].len());
     Ok(out)
 }
 
-pub fn mul_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT) -> Result<Ctxt, R1CSError> {
+pub fn mul_ctxt_ptxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
+    assert_eq!(in_l[0].len(), in_r.len());
+    assert_eq!(in_l[0][0].len(), in_r[0].len());
 
     let out = vec![
-        mul_poly(cs, &in_l[0], &in_r)?,
-        mul_poly(cs, &in_l[1], &in_r)?,
+        mul_poly(cs, &in_l[0], &in_r, &params.q)?,
+        mul_poly(cs, &in_l[1], &in_r, &params.q)?,
     ];
 
     Ok(out)
@@ -149,6 +156,8 @@ pub fn mul_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &Ptxt
 
 pub fn add_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT, q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
+    assert_eq!(in_l[0].len(), in_r.len());
+    assert_eq!(in_l[0][0].len(), in_r[0].len());
 
     let out = vec![
         add_poly(cs, &in_l[0], &in_r)?,
@@ -159,25 +168,29 @@ pub fn add_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &Ptxt
 }
 
 
-pub fn mul_ctxt_ctxt<CS: ConstraintSystem>(cs: &mut CS, in_l: Vec<Vec<Vec<AllocatedScalar>>>, in_r: Vec<Vec<Vec<AllocatedScalar>>>) -> Result<Vec<Vec<Vec<AllocatedScalar>>>, R1CSError> {
+pub fn mul_ctxt_ctxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l: Vec<Vec<Vec<AllocatedScalar>>>, in_r: Vec<Vec<Vec<AllocatedScalar>>>) -> Result<Vec<Vec<Vec<AllocatedScalar>>>, R1CSError> {
     assert_eq!(in_l.len(), 2);
-    assert_eq!(in_r.len(), 2);
+    assert_eq!(in_l.len(), in_r.len());
+    assert_eq!(in_l[0].len(), in_r[0].len());
+    assert_eq!(in_l[0][0].len(), in_r[0][0].len());
     let l = in_l[0].len();
     let n = in_l[0][0].len();
 
-    let tmp1 = mul_poly(cs, &in_l[0], &in_r[1])?;
-    let tmp2 = mul_poly(cs, &in_l[1], &in_r[0])?;
+    let tmp1 = mul_poly(cs, &in_l[0], &in_r[1], &params.q)?;
+    let tmp2 = mul_poly(cs, &in_l[1], &in_r[0], &params.q)?;
 
     let out = vec![
-        mul_poly(cs, &in_l[0], &in_r[0])?,
+        mul_poly(cs, &in_l[0], &in_r[0], &params.q)?,
         add_poly(cs, &tmp1, &tmp2)?,
-        mul_poly(cs, &in_l[1], &in_r[1])?,
+        mul_poly(cs, &in_l[1], &in_r[1], &params.q)?,
     ];
 
     Ok(out)
 }
 
 pub fn mul_poly_pub<CS: ConstraintSystem>(cs: &mut CS, in_l: &PubRNSPoly, in_r: &PubRNSPoly, q: &Vec<Scalar>) -> Result<RNSPoly, R1CSError> {
+    assert_eq!(in_l.len(), in_r.len());
+    assert_eq!(in_l[0].len(), in_r[0].len());
     let l = in_l.len();
     let n = in_l[0].len();
 
@@ -195,20 +208,23 @@ pub fn mul_poly_pub<CS: ConstraintSystem>(cs: &mut CS, in_l: &PubRNSPoly, in_r: 
 }
 
 pub fn mul_poly_pub_priv<CS: ConstraintSystem>(cs: &mut CS, in_l: &PubRNSPoly, in_r: &RNSPoly, q: &Vec<Scalar>) -> Result<RNSPoly, R1CSError> {
+    assert_eq!(in_l.len(), in_r.len());
+    assert_eq!(in_l[0].len(), in_r[0].len());
     let l = in_l.len();
     let n = in_l[0].len();
 
     let mut out: Vec<Vec<AllocatedScalar>> = Vec::with_capacity(l);
     for i in 0..l {
-        out.push(Vec::with_capacity(n));
-        sum_mod(cs, in_r[i].as_ref(), in_l[i].as_ref(), q[i])?;
+        // out.push(Vec::with_capacity(n));
+        // sum_mod(cs, in_r[i].as_ref(), in_l[i].as_ref(), q[i])?;
 
-        // for j in 0..n {
-        //     let out_assignment = Some(in_l[i][j] * in_r[i][j]);
-        //     let out_var = cs.allocate(out_assignment)?;
-        //     let reduced = mod_gate(cs, LinearCombination::from(out_var), out_assignment, q[i])?;
-        //     out[i].push(reduced);
-        // }
+        out.push(Vec::with_capacity(n));
+        for j in 0..n {
+            let out_assignment = in_r[i][j].assignment.and_then(|r| Some(in_l[i][j] * r));
+            let out_var = cs.allocate(out_assignment)?;
+            let reduced = mod_gate(cs, LinearCombination::from(out_var), out_assignment, q[i])?;
+            out[i].push(reduced);
+        }
     }
     Ok(out)
 }
@@ -239,6 +255,12 @@ pub fn mul_ctxt_ctxt_pub<CS: ConstraintSystem>(cs: &mut CS,
 
 pub fn noise_flooding<CS: ConstraintSystem>(cs: &mut CS, ctxt: &Ctxt, b: &Vec<AllocatedScalar>, noise: &Vec<Vec<Vec<Vec<Scalar>>>>, q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
     assert_eq!(ctxt.len(), 2);
+    assert_eq!(ctxt.len(), noise.len());
+    assert_eq!(ctxt[0].len(), noise[0].len());
+    assert_eq!(ctxt[0][0].len(), noise[0][0].len());
+    assert_eq!(b.len(), noise[0][0][0].len());
+
+
     let deg = ctxt.len();
     let l = ctxt[0].len();
     let n = ctxt[0][0].len();
@@ -255,11 +277,13 @@ pub fn noise_flooding<CS: ConstraintSystem>(cs: &mut CS, ctxt: &Ctxt, b: &Vec<Al
     for k in 0..deg {
         out.push(Vec::with_capacity(l));
         for i in 0..l {
-            out.push(Vec::with_capacity(n));
+            out[k].push(Vec::with_capacity(n));
             for j in 0..n {
                 out[k][i].push(sum_mod(cs, b, &noise[k][i][j], q[i])?)
             }
         }
     }
+
+
     Ok(out)
 }
