@@ -1,7 +1,12 @@
+#![feature(test)]
+
 mod tiny;
 mod range_proof;
 mod values;
 mod signed_integer;
+mod gadgets;
+mod small;
+mod utils;
 
 use std::env;
 use std::io::Error;
