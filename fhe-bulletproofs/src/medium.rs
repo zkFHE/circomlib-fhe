@@ -134,7 +134,7 @@ impl MediumProof {
 }
 
 pub fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
-    let n: usize = 128; // 8192;
+    let n: usize = 32; //128; // 8192;
     let qs = vec![35184371613697u64, 70368743489537u64, 70368743587841u64];
     let t = 1073692673u64;
     let params = FHEParams::new(n, &qs, t, 2, 3, Some(33));

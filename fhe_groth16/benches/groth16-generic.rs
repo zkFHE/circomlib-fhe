@@ -151,6 +151,7 @@ fn main() -> ExitCode {
     let (num_vars, num_constraints) = match &name[..] {
         "rlwe" => (3328, 87424), // (212992, 5595136),
         "ec" => (768, 150912), //(768, 9658368),
+        "generic" => (1<<10, 1<<20),
         x => {
             println!("Unknown setting `{x}'");
             return ExitCode::FAILURE;
