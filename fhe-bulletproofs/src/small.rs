@@ -152,9 +152,9 @@ impl SmallProof {
 }
 
 fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Scalar>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
-    let n: usize = 1;
-    let qs = vec![(1u64 << 45), (1u64 << 45), (1u64 << 45)];
-    let t = 1u64 << 21;
+    let n: usize = 8192;
+    let qs = vec![576460752302473217u64, 1152921504606683137u64, 1152921504606748673u64];
+    let t = 1073643521u64;
     let params = FHEParams::new(n, &qs, t, 2, 2, Some(33));
 
     let in1 = new_ctxt(&params, 2);
