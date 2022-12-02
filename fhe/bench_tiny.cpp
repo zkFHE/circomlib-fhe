@@ -17,7 +17,7 @@ int main() {
     parms.set_poly_modulus_degree(poly_modulus_degree);
 
     if (N == 8192 || N == 16384) {
-        parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {59, 60, 60}));
+        parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {43, 43, 60}));
     }
     parms.set_plain_modulus(PlainModulus::Batching(poly_modulus_degree, LOG_T));
     SEALContext context(parms);
@@ -101,6 +101,7 @@ int main() {
 
     cout << "[TIME][SERVER] Eval\t" << time << " us" << endl;
 
+    cout << "[NOISE] Noise budget in output: " << decryptor.invariant_noise_budget(x_encrypted) << " bits" << endl;
     // Decrypt + Decode
     start = chrono::high_resolution_clock::now();
     Plaintext res_plain;
