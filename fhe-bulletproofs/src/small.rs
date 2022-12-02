@@ -2,7 +2,6 @@ extern crate bulletproofs;
 extern crate curve25519_dalek;
 extern crate merlin;
 extern crate rand;
-extern crate test;
 
 use bulletproofs::{BulletproofGens, PedersenGens};
 use bulletproofs::r1cs::*;
@@ -10,13 +9,11 @@ use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
 
-
 use crate::gadgets::*;
-
 use crate::utils::*;
-use crate::values::{AllocatedScalar};
+use crate::values::AllocatedScalar;
 
-struct SmallProof(R1CSProof);
+pub struct SmallProof(R1CSProof);
 
 impl SmallProof {
     fn gadget<CS: ConstraintSystem>(
@@ -151,10 +148,10 @@ impl SmallProof {
     }
 }
 
-fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Scalar>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
-    let n: usize = 8192;
-    let qs = vec![576460752302473217u64, 1152921504606683137u64, 1152921504606748673u64];
-    let t = 1073643521u64;
+pub fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Scalar>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
+    let n: usize = 128; // 8192;
+    let qs = vec![576460752303210497u64, 1152921504606748673u64];
+    let t = 1073692673u64;
     let params = FHEParams::new(n, &qs, t, 2, 2, Some(33));
 
     let in1 = new_ctxt(&params, 2);
@@ -167,26 +164,12 @@ fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Scalar>,
     let outputs = new_ctxt(&params, 2);
 
     let pc_gens = PedersenGens::default();
-    let bp_gens = BulletproofGens::new(4096, 1);
+    let bp_gens = BulletproofGens::new(1 << 18, 1);
 
     (in1, in2, in3, b, outputs, pc_gens, bp_gens, params)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[bench]
-    fn bench_prove(b: &mut Bencher) {
-        let (in1, in2, in3, b, outputs, pc_gens, bp_gens, params) = setup();
-
-        b.iter(|| {
-            prove(&params, &pc_gens, &bp_gens, &in1, &in2, &in3, &b, &outputs)
-        });
-    }
-}
-
-fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, in1: &Vec<Vec<Vec<Scalar>>>, in2: &Vec<Scalar>, in3: &Vec<Scalar>, b: &Vec<Scalar>, out: &Vec<Vec<Vec<Scalar>>>) -> (SmallProof, Vec<CompressedRistretto>, Vec<CompressedRistretto>, Vec<CompressedRistretto>) {
+pub fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, in1: &Vec<Vec<Vec<Scalar>>>, in2: &Vec<Scalar>, in3: &Vec<Scalar>, b: &Vec<Scalar>, out: &Vec<Vec<Vec<Scalar>>>) -> (SmallProof, Vec<CompressedRistretto>, Vec<CompressedRistretto>, Vec<CompressedRistretto>) {
     let mut prover_transcript = Transcript::new(b"SmallProofTest");
     SmallProof::prove(
         &params,
@@ -201,28 +184,27 @@ fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, 
     ).expect("error during proving")
 }
 
-pub(crate) fn main_small() {
-    let (in1, in2, in3, b, out, pc_gens, bp_gens, params) = setup();
-
-
-    let (proof, in2_coms, in3_coms, b_coms) = {
-        let mut prover_transcript = Transcript::new(b"SmallProofTest");
-        SmallProof::prove(
-            &params,
-            &pc_gens,
-            &bp_gens,
-            &mut prover_transcript,
-            &in1,
-            &in2,
-            &in3,
-            &b,
-            &out,
-        ).expect("error during proving")
-    };
-
+pub fn verify(params: &FHEParams,
+              pc_gens: &PedersenGens,
+              bp_gens: &BulletproofGens,
+              proof: &SmallProof,
+              in1: &Vec<Vec<Vec<Scalar>>>,
+              in2_coms: &Vec<CompressedRistretto>,
+              in3_coms: &Vec<CompressedRistretto>,
+              b_coms: &Vec<CompressedRistretto>,
+              out: &Vec<Vec<Vec<Scalar>>>,
+) -> bool {
     let mut verifier_transcript = Transcript::new(b"SmallProofTest");
 
-    let verified = proof.verify(&params, &pc_gens, &bp_gens, &mut verifier_transcript, &in1, &in2_coms, &in3_coms, &b_coms, &out).is_ok();
+    proof.verify(&params, &pc_gens, &bp_gens, &mut verifier_transcript, &in1, &in2_coms, &in3_coms, &b_coms, &out).is_ok()
+}
+
+pub fn main_small() {
+    let (in1, in2, in3, b, out, pc_gens, bp_gens, params) = setup();
+
+    let (proof, in2_coms, in3_coms, b_coms) = prove(&params, &pc_gens, &bp_gens, &in1, &in2, &in3, &b, &out);
+
+    let verified = verify(&params, &pc_gens, &bp_gens, &proof, &in1, &in2_coms, &in3_coms, &b_coms, &out);
     println!("{verified}");
     assert!(verified);
 }

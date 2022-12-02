@@ -8,4 +8,4 @@ compile_circom_circuits:
       init_roles:
         - setup-base
         - setup-circom
-      $CMD$: . {{ exp_code_dir }}/doe-suite-setup.sh && cd {{ exp_code_dir }}/circuits && ./bench_all.sh
+      $CMD$: . {{ exp_code_dir }}/doe-suite-setup.sh && cd {{ exp_code_dir }}/circuits #  && ./bench_all.sh

@@ -36,3 +36,7 @@ endif()
 # add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/depends")
 
 
+add_executable(microBenchRinocchio)
+target_sources(microBenchRinocchio PRIVATE ${CMAKE_CURRENT_LIST_DIR}/microbench_rinocchio.cpp)
+target_link_libraries(microBenchRinocchio SEAL::seal)
+

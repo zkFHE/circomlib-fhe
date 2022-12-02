@@ -3,6 +3,16 @@
 version = 3
 
 [[package]]
+name = "ark-std"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1df2c09229cbc5a028b1d70e00fdb2acee28b1055dfb5ca73eea49c5a25c4e7c"
+dependencies = [
+ "num-traits",
+ "rand",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -123,6 +133,7 @@ dependencies = [
 name = "fhe-bulletproofs"
 version = "0.1.0"
 dependencies = [
+ "ark-std",
  "bulletproofs",
  "bumpalo",
  "crypto-bigint",
