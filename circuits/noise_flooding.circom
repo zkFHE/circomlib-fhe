@@ -38,7 +38,7 @@ template NoiseFlooding(secparam, deg, l, n, q1, q2, q3, q4, q5, q6) {
 	}
 }
 
-template NoiseFloodingNoMod(secparam, deg, n) {
+template NoiseFloodingNonMod(secparam, deg, n) {
 	signal input in[deg][n];
 	signal input noise[secparam][deg][n];
 	signal input b[secparam];
@@ -67,5 +67,33 @@ template NoiseFloodingNoMod(secparam, deg, n) {
 			}
 			out[i][k] <== sum;
 		}
+	}
+}
+
+template NoiseFloodingRing(secparam, deg) {
+	signal input in[deg]; 
+	signal input noise[secparam][deg];
+	signal input b[secparam];
+	
+	signal output out[deg];
+	
+	
+	// Select noise depending on bits b
+	signal lincomb[deg][secparam]; // secparam-index last for easier aggregation later on
+	for (var s = 0; s < secparam; s++) {
+		// Check that b[s] is binary
+		b[s] * (b[s] - 1)  === 0;
+		for (var i = 0; i < deg; i++) {
+			lincomb[i][s] <== b[s] * noise[s][i];
+		}
+	}
+	
+	// Sum all noisy components
+	for (var i = 0; i < deg; i++) {
+		var sum = in[i];
+		for (var j = 0; j < secparam; j++) {
+			sum += lincomb[i][j];
+		}
+		out[i] <== sum;
 	}
 }

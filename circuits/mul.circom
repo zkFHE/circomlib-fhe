@@ -92,6 +92,20 @@ template parallel MulPolySchoolbook(N, q) {
 	}
 }
 
+/* TODO
+template parallel MulCtxtCtxtSchoolbook(l, N, q1, q2, q3, q4, q5, q6) {
+	var q[6] = [q1, q2, q3, q4, q5, q6];
+	
+	signal input in1[2][l][N];
+	signal input in2[2][l][N];
+	signal output out[3][l][N];
+	
+	for (var i = 0; i < l; i++) {
+		out[i] <== MulPolySchoolbook(N, q[i])(in1[i], in2[i]);
+	}
+}
+*/
+
 // Compute assuming both inputs are in NTT form
 template parallel MulCtxtCtxt(l, n, q1, q2, q3, q4, q5, q6) {
     signal input in1[2][l][n];
@@ -147,6 +161,17 @@ template parallel SquareCtxt(l, n, q1, q2, q3, q4, q5, q6) {
     out[1] <== parallel FastDoubleMods(l, n, q1, q2, q3, q4, q5, q6)(tmp);
 
     out[2] <== parallel MulsPointwise(l, n, q1, q2, q3, q4, q5, q6)(in[1], in[1]);
+}
+
+// Compute assuming both inputs are in NTT form
+template parallel SquareCtxtRing() {
+    signal input in[2];
+
+    signal output out[3];
+
+    out[0] <== in[0] * in[0];
+    out[1] <== 2 * in[0] * in[1];
+    out[2] <== in[1] * in[1];
 }
 
 // Compute assuming both inputs are in NTT form

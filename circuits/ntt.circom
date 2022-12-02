@@ -325,15 +325,46 @@ template parallel NTT(n, q) {
 }
 
 template NTTs(l, n, q1, q2, q3, q4, q5, q6) {
-    var q[6] = [q1, q2, q3, q4, q5, q6];
+	var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in[l][n];
 	signal output out[l][n];
 	
 	for (var i = 0; i < l; i++) {
-		if (q[i] > 0) { // For parameter choices with less levels, set q_i to 0 and skip circuit generation
-			out[i] <== parallel NTT(n, q[i])(in[i]);
-		}
+		out[i] <== parallel NTT(n, q[i])(in[i]);
 	}
+}
+
+template NTTsPlain(l, n, q1, q2, q3, q4, q5, q6) {
+	var q[6] = [q1, q2, q3, q4, q5, q6];
+	signal input in[n];
+	signal output out[l][n];
+	
+	for (var i = 0; i < l; i++) {
+		out[i] <== parallel NTT(n, q[i])(in);
+	}
+}
+
+template NTTRing(n) {
+	signal input values;
+	signal aux[n-1];
+	signal output out;
+	
+	// TODO: in the ring setting, these would be ring elements, i.e., polynomials
+	var roots = 3; // TODO: hard-code? C pre-processor? Making this a signal might make the circuit bigger than needed. Fill with dummy data for now
+	var curr_col = 3;
+	
+	// NTT(x) = F_0 * x + F_1 * x + ... + F_n * x, with F_0 = 1
+	var sum = values;
+	for (var i = 1; i < n; i++) {
+		aux[i-1] <== curr_col * values;
+		sum += aux[i-1];
+		
+		// Build next column of the DFT Vandermonde matrix
+		// F(i, j) = r^(i*j) = r^(i*(j-1)) * r^i = F(i, j-1) * roots[i]
+		curr_col = (curr_col * roots);
+	}
+	out <== sum;
+	
 }
 
 template INTT(n, q) {
