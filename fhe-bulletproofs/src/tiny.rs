@@ -79,30 +79,18 @@ impl TinyProof {
 }
 
 pub fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
-    let c1 = vec![vec![vec![
-        Scalar::from(0u64),
-    ]], vec![vec![
-        Scalar::from(0u64),
-    ]]];
-    let c2 = vec![vec![vec![
-        Scalar::from(0u64),
-    ]], vec![vec![
-        Scalar::from(0u64),
-    ]]];
-    let outputs = vec![vec![vec![
-        Scalar::from(0u64),
-    ]], vec![vec![
-        Scalar::from(0u64),
-    ]]];
+    let n: usize = 32; //128; // 8192;
+    let qs = vec![8796092792833u64, 8796092858369u64];
+    let t = 1073692673u64;
+    let params = FHEParams::new(n, &qs, t, 0, 0, None);
 
+    let in1 = new_ctxt(&params, 2);
+    let in2 = new_ctxt(&params, 2);
+    let out = new_ctxt(&params, 3);
     let pc_gens = PedersenGens::default();
-    let bp_gens = BulletproofGens::new(2048, 1);
+    let bp_gens = BulletproofGens::new(1<<17, 1);
 
-    let n: usize = 8192;
-    let qs = vec![(1u64 << 45), (1u64 << 45), (1u64 << 45)];
-    let t = 1u64 << 21;
-
-    (c1, c2, outputs, pc_gens, bp_gens, FHEParams::new(n, &qs, t, 0, 0, None))
+    (in1, in2, out, pc_gens, bp_gens, params)
 }
 
 pub fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, c1: &Vec<Vec<Vec<Scalar>>>, c2: &Vec<Vec<Vec<Scalar>>>, outputs: &Vec<Vec<Vec<Scalar>>>) -> TinyProof {
