@@ -6,8 +6,7 @@ using namespace std;
 using namespace seal;
 
 
-// #define N 8192
-#define N 16384
+#define N 8192
 #define LOG_T 30
 
 #define SEC_PARAM 128

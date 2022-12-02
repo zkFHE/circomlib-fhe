@@ -8,22 +8,14 @@ using namespace seal;
 
 #define N 8192
 #define LOG_T 30
+#define REPEATS 10
 
-/* // TODO: does not work, ciphertext modulus is not big enough for secure noise flooding
-#define N 4096
-#define LOG_T 16
- */
-
-#define SEC_PARAM 128
-// Most recent and smallest estimate from "Securing Approximate Homomorphic Encryption using Differential Privacy" [LMSS21](https://eprint.iacr.org/2022/816) for lambda = 128 and s = 64
-#define NOISE_BITS 45
 
 int main() {
     EncryptionParameters parms(scheme_type::bgv);
     size_t poly_modulus_degree = N;
     parms.set_poly_modulus_degree(poly_modulus_degree);
 
-    //parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
     if (N == 8192 || N == 16384) {
         parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, {59, 60, 60}));
     }
@@ -66,27 +58,14 @@ int main() {
     keygen.create_public_key(public_key);
     auto end = chrono::high_resolution_clock::now();
     auto time = chrono::duration_cast<chrono::microseconds>(end - start).count();
-
+    cout << "[TIME][CLIENT] One-time setup\t" << time << " us" << endl;
     Encryptor encryptor(context, public_key);
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
 
-
     BatchEncoder batch_encoder(context);
     size_t slot_count = batch_encoder.slot_count();
     size_t row_size = slot_count / 2;
-
-    start = chrono::high_resolution_clock::now();
-    vector<Ciphertext> zeros_encrypted(SEC_PARAM);
-    vector<uint64_t> zeros(slot_count, 0ULL);
-    Plaintext zero_plain;
-    batch_encoder.encode(zeros, zero_plain);
-    for (int i = 0; i < SEC_PARAM; i++) {
-        encryptor.encrypt(zero_plain, zeros_encrypted[i]);
-    }
-    end = chrono::high_resolution_clock::now();
-    cout << "[TIME][CLIENT] One-time setup\t" << time + chrono::duration_cast<chrono::microseconds>(end - start).count()
-         << " us" << endl;
 
     vector<uint64_t> pod_matrix(slot_count);
     for (size_t i = 0; i < row_size; i++) {
@@ -95,13 +74,14 @@ int main() {
     }
 
     start = chrono::high_resolution_clock::now();
-    Plaintext x_plain;
+    Plaintext x_plain, y_plain;
     batch_encoder.encode(pod_matrix, x_plain);
+    batch_encoder.encode(pod_matrix, y_plain);
 
-    Ciphertext x_encrypted;
+    Ciphertext x_encrypted, y_encrypted;
     encryptor.encrypt(x_plain, x_encrypted);
+    encryptor.encrypt(y_plain, y_encrypted);
     end = chrono::high_resolution_clock::now();
-
 
     cout << "[NOISE] Noise budget in freshly encrypted x: " << decryptor.invariant_noise_budget(x_encrypted) << " bits"
          << endl;
@@ -113,38 +93,13 @@ int main() {
          << " us"
          << endl;
 
-    start = chrono::high_resolution_clock::now();
-    Plaintext w1_plain, w2_plain;
-    batch_encoder.encode(pod_matrix, w1_plain);
-    batch_encoder.encode(pod_matrix, w2_plain);
-    end = chrono::high_resolution_clock::now();
-    cout << "[TIME][SERVER] Encode\t" << chrono::duration_cast<chrono::microseconds>(end - start).count()
-         << " us"
-         << endl;
-
     // Perform computation
     start = chrono::high_resolution_clock::now();
-    evaluator.multiply_plain_inplace(x_encrypted, w1_plain);
-    evaluator.add_plain_inplace(x_encrypted, w2_plain);
+    evaluator.multiply_inplace(x_encrypted, y_encrypted);
     end = chrono::high_resolution_clock::now();
     time = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
-    const auto noise_budget_before_noise_flooding = decryptor.invariant_noise_budget(x_encrypted);
-    cout << "[NOISE] Noise budget before noise flooding: " << decryptor.invariant_noise_budget(x_encrypted) << " bits"
-         << endl;
-    auto noise_flooding_budget = NOISE_BITS; //  * ceil(log2(SEC_PARAM / 2));
-    cout << "[NOISE] Required remaining noise budget:  " << noise_flooding_budget << " bits" << endl;
-    assert(noise_budget_before_noise_flooding >= noise_flooding_budget);
-    // Add noise flooding
-    start = chrono::high_resolution_clock::now();
-    // In reality, each selector bit is chosen u.a.r., so this would be a binomial distribution Binom(n=SEC_PARAM, p=0.5)
-    for (int i = 0; i < SEC_PARAM / 2; i++) {
-        evaluator.add_inplace(x_encrypted, zeros_encrypted[i]); // Noise flooding
-    }
-    end = chrono::high_resolution_clock::now();
-    cout << "[TIME][SERVER] Eval\t" << time + chrono::duration_cast<chrono::microseconds>(end - start).count()
-         << " us"
-         << endl;
+    cout << "[TIME][SERVER] Eval\t" << time << " us" << endl;
 
     // Decrypt + Decode
     start = chrono::high_resolution_clock::now();
@@ -157,13 +112,9 @@ int main() {
          << " us"
          << endl;
 
-
     // Compute total size in bytes, see https://github.com/microsoft/SEAL/issues/88
-    unsigned long long size =
-            (1 + SEC_PARAM) * x_encrypted.size() * parms.coeff_modulus().size() * parms.poly_modulus_degree() * 8;
-    cout << "[SPACE] Ciphertext size\t" << size
-         << " B"
-         << endl;
+    unsigned long long size = x_encrypted.size() * parms.coeff_modulus().size() * parms.poly_modulus_degree() * 8;
+    cout << "[SPACE] Ciphertext size\t" << size << " B" << endl;
     cout << endl;
 }
 
