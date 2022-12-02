@@ -29,13 +29,12 @@ template RLWE_ZKP(n, t, q1, q2, q3) {
 	}
 
 	for (var j = 0; j < l; j++) {
-	    LtConstantN(128 \ q[j], n)(err_in[j]);	// Range check for error
-        LtConstantN(128 \ q[j], n)(err_cons[j]);	// Range check for error
+		LtConstantN(128 \ q[j], n)(err_in[j]);	// Range check for error
+		LtConstantN(128 \ q[j], n)(err_cons[j]);	// Range check for error
 
-        LtConstantN(q[j], n)(a_in[j]);
-        LtConstantN(q[j], n)(a_cons[j]);
-    }
-	
+	        LtConstantN(q[j], n)(a_in[j]);
+        	LtConstantN(q[j], n)(a_cons[j]);
+    	}
 
 	// Encryption of inputs
 	// Symmetric encryption using BGV: (c[0], c[1]) = ([-(as+te)]_q, a)

@@ -21,7 +21,7 @@ function log2(a) {
 		return 0;
 	}
 	var n = 1;
-	var r = 1;
+	var r = 0;
 	while (n<a) {
 		r++;
 		n *= 2;
