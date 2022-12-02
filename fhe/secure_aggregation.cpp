@@ -7,6 +7,7 @@ using namespace seal;
 #define N 8192
 #define LOG_T 22
 
+#define REPEATS 10
 
 int main() {
     EncryptionParameters parms(scheme_type::bgv);
@@ -55,7 +56,9 @@ int main() {
 
     }
     cout << endl;
-
+    {
+ auto start = chrono::high_resolution_clock::now(); 
+	    for (int i = 0; i < REPEATS; i++) {
     KeyGenerator keygen(context);
     SecretKey secret_key = keygen.secret_key();
     PublicKey public_key;
@@ -65,7 +68,23 @@ int main() {
     Encryptor encryptor(context, public_key);
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
+	}
+	    auto end = chrono::high_resolution_clock::now();
+	cout << "[TIME] Setup\t" << float(chrono::duration_cast<chrono::microseconds>(end - start).count()) / REPEATS
+         << " us"
+         << endl;
 
+
+    }
+KeyGenerator keygen(context);
+    SecretKey secret_key = keygen.secret_key();
+    PublicKey public_key;
+    keygen.create_public_key(public_key);
+    RelinKeys relin_keys;
+    keygen.create_relin_keys(relin_keys);
+    Encryptor encryptor(context, public_key);
+    Evaluator evaluator(context);
+    Decryptor decryptor(context, secret_key);
 
     BatchEncoder batch_encoder(context);
     size_t slot_count = batch_encoder.slot_count();
@@ -81,12 +100,14 @@ int main() {
 
     auto start = chrono::high_resolution_clock::now();
     Plaintext x_plain, zero_plain;
+    Ciphertext x_encrypted, zero_encrypted;
+    for (int i = 0; i < REPEATS; i++) {
     batch_encoder.encode(pod_matrix, x_plain);
     batch_encoder.encode(zeros, zero_plain);
 
-    Ciphertext x_encrypted, zero_encrypted;
     encryptor.encrypt(x_plain, x_encrypted);
     encryptor.encrypt(zero_plain, zero_encrypted);
+    }
     auto end = chrono::high_resolution_clock::now();
 
     cout << "Noise budget in freshly encrypted x: " << decryptor.invariant_noise_budget(x_encrypted) << " bits"
@@ -95,7 +116,7 @@ int main() {
          << endl;
 
     cout << "=======================================" << endl;
-    cout << "[TIME] Encode+Encrypt\t" << chrono::duration_cast<chrono::microseconds>(end - start).count()
+    cout << "[TIME] Encode+Encrypt\t" << float(chrono::duration_cast<chrono::microseconds>(end - start).count()) / REPEATS
          << " us"
          << endl;
 
