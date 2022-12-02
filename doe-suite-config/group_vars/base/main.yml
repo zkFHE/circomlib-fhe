@@ -1,18 +1,18 @@
 ---
 
-instance_type: m5.xlarge
+instance_type: c5d.4xlarge
 ec2_volume_size: 16
 
 ec2_image_id:  ami-00648c36e527032ec
 ec2_volume_snapshot: snap-05ef2c8fddba03ed0
 
-euler_job_minutes: 120 # individual job time
-euler_cpu_cores: 4
-euler_cpu_mem_per_core_mb: 3072
-euler_gpu_number: 0
-euler_gpu_min_mem_per_gpu_mb: 0
-euler_gpu_model: ~ # if set to a specific GPU, then the euler_gpu_min_mem_per_gpu_mb is ignored
-euler_env: gcc/8.2.0 python/3.9.9
+  #euler_job_minutes: 120 # individual job time
+  #euler_cpu_cores: 4
+  #euler_cpu_mem_per_core_mb: 3072
+  #euler_gpu_number: 0
+  #euler_gpu_min_mem_per_gpu_mb: 0
+  #euler_gpu_model: ~ # if set to a specific GPU, then the euler_gpu_min_mem_per_gpu_mb is ignored
+  #euler_env: gcc/8.2.0 python/3.9.9
 
 
 euler_scratch_dir: "/cluster/scratch/{{ euler_user }}"

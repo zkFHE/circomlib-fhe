@@ -16,3 +16,7 @@ add_executable(benchMedium)
 target_sources(benchMedium PRIVATE ${CMAKE_CURRENT_LIST_DIR}/bench_medium.cpp)
 target_link_libraries(benchMedium SEAL::seal)
 
+add_executable(microBenchRinocchio)
+target_sources(microBenchRinocchio PRIVATE ${CMAKE_CURRENT_LIST_DIR}/microbench_rinocchio.cpp)
+target_link_libraries(microBenchRinocchio SEAL::seal)
+
