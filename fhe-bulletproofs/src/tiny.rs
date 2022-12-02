@@ -2,24 +2,19 @@ extern crate bulletproofs;
 extern crate curve25519_dalek;
 extern crate merlin;
 extern crate rand;
-extern crate test;
 
 use bulletproofs::{BulletproofGens, PedersenGens};
 use bulletproofs::r1cs::*;
-
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
 
-
 use crate::gadgets::*;
-
 use crate::utils::*;
 
-
-struct TinyProof(R1CSProof);
+pub struct TinyProof(R1CSProof);
 
 impl TinyProof {
-    fn gadget<CS: ConstraintSystem>(cs: &mut CS, params: &FHEParams, in_l: &PubCtxt, in_r: &PubCtxt, out: &PubCtxt) -> Result<(), R1CSError> {
+    pub fn gadget<CS: ConstraintSystem>(cs: &mut CS, params: &FHEParams, in_l: &PubCtxt, in_r: &PubCtxt, out: &PubCtxt) -> Result<(), R1CSError> {
         let out_circuit = mul_ctxt_ctxt_pub(cs, params, in_l, in_r)?;
         for k in 0..out.len() {
             for i in 0..out[k].len() {
@@ -83,7 +78,7 @@ impl TinyProof {
     }
 }
 
-fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
+pub fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, PedersenGens, BulletproofGens, FHEParams) {
     let c1 = vec![vec![vec![
         Scalar::from(0u64),
     ]], vec![vec![
@@ -110,21 +105,7 @@ fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Scalar>>>, Vec<Vec<Vec<Sca
     (c1, c2, outputs, pc_gens, bp_gens, FHEParams::new(n, &qs, t, 0, 0, None))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[bench]
-    fn bench_prove(b: &mut Bencher) {
-        let (c1, c2, outputs, pc_gens, bp_gens, params) = setup();
-
-        b.iter(|| {
-            prove(&params, &pc_gens, &bp_gens, &c1, &c2, &outputs)
-        });
-    }
-}
-
-fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, c1: &Vec<Vec<Vec<Scalar>>>, c2: &Vec<Vec<Vec<Scalar>>>, outputs: &Vec<Vec<Vec<Scalar>>>) -> TinyProof {
+pub fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, c1: &Vec<Vec<Vec<Scalar>>>, c2: &Vec<Vec<Vec<Scalar>>>, outputs: &Vec<Vec<Vec<Scalar>>>) -> TinyProof {
     let mut prover_transcript = Transcript::new(b"TinyProofTest");
     TinyProof::prove(
         &params,
@@ -137,18 +118,18 @@ fn prove(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, 
     ).expect("error during proving")
 }
 
-fn verify(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, proof: TinyProof, in_l: &Vec<Vec<Vec<Scalar>>>, in_r: &Vec<Vec<Vec<Scalar>>>, out: &Vec<Vec<Vec<Scalar>>>) -> bool {
+pub fn verify(params: &FHEParams, pc_gens: &PedersenGens, bp_gens: &BulletproofGens, proof: &TinyProof, in_l: &Vec<Vec<Vec<Scalar>>>, in_r: &Vec<Vec<Vec<Scalar>>>, out: &Vec<Vec<Vec<Scalar>>>) -> bool {
     let mut verifier_transcript = Transcript::new(b"TinyProofTest");
 
     return proof.verify(params, &pc_gens, &bp_gens, &mut verifier_transcript, &in_l, &in_r, &out).is_ok();
 }
 
-pub(crate) fn main_tiny() {
+pub fn main_tiny() {
     let (in_l, in_r, out, pc_gens, bp_gens, params) = setup();
 
     let proof = prove(&params, &pc_gens, &bp_gens, &in_l, &in_r, &out);
 
-    let verified = verify(&params, &pc_gens, &bp_gens, proof, &in_l, &in_r, &out);
+    let verified = verify(&params, &pc_gens, &bp_gens, &proof, &in_l, &in_r, &out);
     println!("{verified}");
     assert!(verified);
 }

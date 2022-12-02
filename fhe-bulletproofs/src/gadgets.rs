@@ -5,14 +5,11 @@ extern crate rand;
 
 
 use bulletproofs::r1cs::*;
-
 use curve25519_dalek::scalar::Scalar;
-
-
 
 use crate::range_proof::{lt_constant, mod_gate, mod_scalar};
 use crate::utils::FHEParams;
-use crate::values::{AllocatedScalar};
+use crate::values::AllocatedScalar;
 
 pub(crate) type Poly = Vec<AllocatedScalar>;
 pub(crate) type RNSPoly = Vec<Poly>;
