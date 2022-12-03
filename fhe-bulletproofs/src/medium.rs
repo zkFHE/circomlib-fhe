@@ -148,7 +148,7 @@ pub fn setup<'a>() -> (Vec<Vec<Vec<Scalar>>>, Vec<Scalar>, Vec<Scalar>, Vec<Vec<
     let outputs = new_ctxt(&params, 3);
 
     let pc_gens = PedersenGens::default();
-    let bp_gens = BulletproofGens::new(1 << 19, 1);
+    let bp_gens = BulletproofGens::new(1 << 17, 1);
 
     (in1, in2, b, outputs, pc_gens, bp_gens, params)
 }
