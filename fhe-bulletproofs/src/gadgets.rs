@@ -4,6 +4,8 @@ extern crate merlin;
 extern crate rand;
 
 
+use std::ops::Neg;
+
 use bulletproofs::r1cs::*;
 use curve25519_dalek::scalar::Scalar;
 
@@ -62,16 +64,38 @@ pub fn to_ntt<CS: ConstraintSystem>(cs: &mut CS, ptxt: &Ptxt, l: usize, table: &
     Ok(out)
 }
 
-pub fn valid_ptxt<CS: ConstraintSystem>(cs: &mut CS, ptxt: &Ptxt) -> Result<(), R1CSError> {
-    let t_int: u64 = 5;
-    let t: Scalar = Scalar::from(t_int);
-
+pub fn valid_ptxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, ptxt: &Ptxt) -> Result<(), R1CSError> {
     let n = ptxt.len();
 
     for j in 0..n {
-        lt_constant(cs, LinearCombination::from(ptxt[j].variable), ptxt[j].assignment, t)?;
+        lt_constant(cs, LinearCombination::from(ptxt[j].variable), ptxt[j].assignment, params.t)?;
     }
     Ok(())
+}
+
+pub fn in_range<CS: ConstraintSystem>(cs: &mut CS, ptxt: &Ptxt, ct: Scalar) -> Result<(), R1CSError> {
+    let n = ptxt.len();
+
+    for j in 0..n {
+        lt_constant(cs, LinearCombination::from(ptxt[j].variable), ptxt[j].assignment, ct)?;
+    }
+    Ok(())
+}
+
+pub fn add_poly_<CS: ConstraintSystem>(cs: &mut CS, in_l: &Poly, in_r: &Poly, q: Scalar) -> Result<Poly, R1CSError> {
+    let n = in_l.len();
+
+    let mut out: Poly = Vec::with_capacity(n);
+    for j in 0..n {
+        let out_assignment = match (in_l[j].assignment, in_r[j].assignment) {
+            (Some(l), Some(r)) => Some(l + r),
+            (_, _) => None
+        };
+
+        let reduced = mod_gate(cs, LinearCombination::from(in_l[j].variable) + LinearCombination::from(in_r[j].variable), out_assignment, q)?;
+        out.push(reduced);
+    }
+    Ok(out)
 }
 
 pub fn add_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPoly) -> Result<RNSPoly, R1CSError> {
@@ -97,10 +121,21 @@ pub fn add_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPol
     Ok(out)
 }
 
-pub fn sub_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPoly) -> Result<RNSPoly, R1CSError> {
-    let q_int: u64 = 17;
-    let q: Scalar = Scalar::from(q_int);
+pub fn neg_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &Poly, q: Scalar) -> Result<Poly, R1CSError> {
+    let n = in_l.len();
 
+    let mut out: Poly = Vec::with_capacity(n);
+    for j in 0..n {
+        let out_assignment = in_l[j].assignment.and_then(|x| Some(x.neg()));
+
+        let reduced = mod_gate(cs, LinearCombination::from(in_l[j].variable).neg(), out_assignment, q)?;
+        out.push(reduced);
+    }
+
+    Ok(out)
+}
+
+pub fn sub_poly<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPoly) -> Result<RNSPoly, R1CSError> {
     let l = in_l.len();
     let n = in_l[0].len();
 
@@ -113,9 +148,29 @@ pub fn sub_poly<CS: ConstraintSystem>(cs: &mut CS, in_l: &RNSPoly, in_r: &RNSPol
                 (_, _) => None
             };
 
-            let reduced = mod_gate(cs, LinearCombination::from(in_l[i][j].variable) - LinearCombination::from(in_r[i][j].variable), out_assignment, q)?;
+            let reduced = mod_gate(cs, LinearCombination::from(in_l[i][j].variable) - LinearCombination::from(in_r[i][j].variable), out_assignment, params.q[i])?;
             out[i].push(reduced);
         }
+    }
+    Ok(out)
+}
+
+pub fn mul_poly_<CS: ConstraintSystem>(cs: &mut CS, in_l: &Poly, in_r: &Poly, q: Scalar) -> Result<Poly, R1CSError> {
+    assert_eq!(in_l.len(), in_r.len());
+
+    let n = in_l.len();
+
+    let mut out: Poly = Vec::with_capacity(n);
+    for j in 0..n {
+        let (_, _, out_var) = cs.multiply(LinearCombination::from(in_l[j].variable), LinearCombination::from(in_r[j].variable));
+
+        let out_assignment = match (in_l[j].assignment, in_r[j].assignment) {
+            (Some(l), Some(r)) => Some(l * r),
+            (_, _) => None
+        };
+
+        let reduced = mod_gate(cs, LinearCombination::from(out_var), out_assignment, q)?;
+        out.push(reduced);
     }
     Ok(out)
 }
@@ -187,13 +242,13 @@ pub fn add_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &Ptxt
     Ok(out)
 }
 
-pub fn sub_ctxt_ptxt<CS: ConstraintSystem>(cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT, _q: &Vec<Scalar>) -> Result<Ctxt, R1CSError> {
+pub fn sub_ctxt_ptxt<CS: ConstraintSystem>(params: &FHEParams, cs: &mut CS, in_l: &Ctxt, in_r: &PtxtNTT) -> Result<Ctxt, R1CSError> {
     assert_eq!(in_l.len(), 2);
     assert_eq!(in_l[0].len(), in_r.len());
     assert_eq!(in_l[0][0].len(), in_r[0].len());
 
     let out = vec![
-        sub_poly(cs, &in_l[0], &in_r)?,
+        sub_poly(params, cs, &in_l[0], &in_r)?,
         in_l[1].clone(),
     ];
 

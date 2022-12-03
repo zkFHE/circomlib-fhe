@@ -42,3 +42,7 @@ harness = false
 [[bench]]
 name = "medium"
 harness = false
+
+[[bench]]
+name = "secure-aggregation"
+harness = false

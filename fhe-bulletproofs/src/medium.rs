@@ -24,7 +24,7 @@ impl MediumProof {
         b: &Vec<AllocatedScalar>,
         out: &PubCtxt,
     ) -> Result<(), R1CSError> {
-        valid_ptxt(cs, in_2)?;
+        valid_ptxt(params, cs, in_2)?;
 
         let l = in_1[0].len();
         let q = &params.q;

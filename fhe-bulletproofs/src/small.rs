@@ -25,8 +25,8 @@ impl SmallProof {
         b: &Vec<AllocatedScalar>,
         out: &PubCtxt,
     ) -> Result<(), R1CSError> {
-        valid_ptxt(cs, in_2)?;
-        valid_ptxt(cs, in_3)?;
+        valid_ptxt(params, cs, in_2)?;
+        valid_ptxt(params, cs, in_3)?;
 
         let l = in_1[0].len();
         let q = &params.q;

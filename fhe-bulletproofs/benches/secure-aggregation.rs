@@ -8,38 +8,38 @@ use bulletproofs::r1cs::*;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
 
-use fhe_bulletproofs::medium::*;
+use fhe_bulletproofs::secure_aggregation::*;
 
 const NUM_REPETITIONS: usize = 10;
 
 fn bench_prove() {
-    let (in1, in2, b, out, pc_gens, bp_gens, params) = setup();
+    let (in_out, pc_gens, bp_gens, params) = setup();
 
     let start = ark_std::time::Instant::now();
 
     for _ in 0..NUM_REPETITIONS {
-        let (_proof, _in2_coms, _b_coms) = prove(&params, &pc_gens, &bp_gens, &in1, &in2, &b, &out);
+        let (_proof, _coms) = prove(&params, &pc_gens, &bp_gens, &in_out);
     }
 
     println!(
-        "Proving time for medium: {} us",
+        "Proving time for secure_aggregation: {} us",
         start.elapsed().as_micros() / NUM_REPETITIONS as u128
     );
 }
 
 fn bench_verify() {
-    let (in1, in2, b, out, pc_gens, bp_gens, params) = setup();
+    let (in_out, pc_gens, bp_gens, params) = setup();
 
-    let (proof, in2_coms, b_coms) = prove(&params, &pc_gens, &bp_gens, &in1, &in2, &b, &out);
+    let (proof, coms) = prove(&params, &pc_gens, &bp_gens, &in_out);
 
     let start = ark_std::time::Instant::now();
 
     for _ in 0..NUM_REPETITIONS {
-        let _verified = verify(&params, &pc_gens, &bp_gens, &proof, &in1, &in2_coms, &b_coms, &out);
+        let _verified = verify(&params, &pc_gens, &bp_gens, &proof, &coms, &in_out);
     }
 
     println!(
-        "verifying time for medium: {} us",
+        "verifying time for secure_aggregation: {} us",
         start.elapsed().as_micros() / NUM_REPETITIONS as u128
     );
 }
