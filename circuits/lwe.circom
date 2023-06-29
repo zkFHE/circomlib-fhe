@@ -3,6 +3,7 @@ pragma circom 2.1.0;
 include "add.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/comparators.circom";
+include "circomlib/circuits/compconstant.circom";
 
 // addition of LWE ciphertexts: (a1, b1) + (a2, b2)
 template AddLWE(n, q) {
@@ -47,8 +48,35 @@ template RoundDiv() {
     out <== quot + bit_add;
 }
 
+// computes round(num/Q)
+template RoundDivQ(Q) {
+    assert(Q > 0);
+
+    signal input num;
+    signal output out;
+
+    signal quot <-- num \ Q;
+    signal rem <-- num % Q;
+    signal rem_bits[254] <== Num2Bits(254)(rem);
+
+    num === Q * quot + rem; // correct division
+    
+    component c1 = CompConstant(Q-1);
+    c1.in <== rem_bits;
+    c1.out === 0; // rem < Q
+
+    // possible optimization: leverage previous bit decomposition of rem
+    signal rem2_bits[254] <== Num2Bits(254)(2*rem);
+
+    signal bit_add <== CompConstant(Q-1)(rem2_bits);
+
+    // out <== quot + (2*rem < Q) ? 0 : 1
+    out <== quot + bit_add;
+}
+
 // Examples of instantiations to check compilation:
 
 // component main = AddLWE(10, 17);
 // component main = SubLWE(10, 17);
 // component main = RoundDiv();
+// component main = RoundDivQ(5);
