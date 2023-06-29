@@ -17,6 +17,10 @@ function max(x, y) {
 }
 
 function log2(a) {
+	return logb(a, 2);
+}
+
+function logb(a, b) {
 	if (a==0) {
 		return 0;
 	}
@@ -24,7 +28,7 @@ function log2(a) {
 	var r = 0;
 	while (n<a) {
 		r++;
-		n *= 2;
+		n *= b;
 	}
 	return r;
 }
