@@ -2,6 +2,7 @@ pragma circom 2.1.0;
 
 include "add.circom";
 include "mod.circom";
+include "util.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/compconstant.circom";
@@ -94,6 +95,34 @@ template ModSwitch(n, q, Q) {
     b_out <== modq[n].out;
 }
 
+// switches from key with dimension N to key with dimension n
+// NOT WORKING YET
+template KeySwitch(n, N, q, B, kska, kskb) {
+    signal input a_in[N], b_in;
+    signal output a_out[n], b_out;
+
+    var a[n], b;
+    var digits = logb(q, B);
+    
+    for (var i=0; i<n; i++) {
+        a[i] = 0;
+    }
+    b = b_in;
+
+    for (var i=0; i<N; i++) {
+        var atmp = a_in[i];
+        for (var j=0; j<digits; j++) {
+            var a0 = (atmp % B);
+            // invalid expression below -> unknown index a0
+            (a, b) = SubLWE(n, q)(a, b, kska[i][j][a0], kskb[i][j][a0]);
+            atmp \= B;
+        }
+    }
+
+    a_out <== a;
+    b_out <== b;
+}
+
 // Examples of instantiations to check compilation:
 
 // component main = AddLWE(10, 17);
@@ -101,3 +130,6 @@ template ModSwitch(n, q, Q) {
 // component main = RoundDiv();
 // component main = RoundDivQ(5);
 // component main = ModSwitch(5, 2, 6);
+// component main = KeySwitch(2, 3, 5, 2, 
+//     [[[[2, 3], [4, 2]], [[0, 0], [1, 2]], [[4, 3], [2, 1]]], [[[2, 3], [4, 2]], [[0, 0], [1, 2]], [[4, 3], [2, 1]]], [[[2, 3], [4, 2]], [[0, 0], [1, 2]], [[4, 3], [2, 1]]]],
+//     [[[1, 1], [2, 0], [3, 1]], [[1, 1], [2, 0], [3, 1]], [[1, 1], [2, 0], [3, 1]]]);
