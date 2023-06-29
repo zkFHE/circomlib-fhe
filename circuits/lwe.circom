@@ -1,6 +1,7 @@
 pragma circom 2.1.0;
 
 include "add.circom";
+include "mod.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/compconstant.circom";
@@ -74,9 +75,29 @@ template RoundDivQ(Q) {
     out <== quot + bit_add;
 }
 
+// switches from modulus Q to modulus q
+template ModSwitch(n, q, Q) {
+    signal input a_in[n], b_in;
+    signal output a_out[n], b_out;
+    component modq[n+1];
+
+    for (var i = 0; i < n; i++) {
+        modq[i] = Mod(q);
+        // modq[i].in <== RoundDiv()(q*a_in[i], Q);
+        modq[i].in <== RoundDivQ(Q)(q*a_in[i]);
+        a_out[i] <== modq[i].out;
+    }
+
+    modq[n] = Mod(q);
+    // modq[n].in <== RoundDiv()(q*b_in, Q);
+    modq[n].in <== RoundDivQ(Q)(q*b_in);
+    b_out <== modq[n].out;
+}
+
 // Examples of instantiations to check compilation:
 
 // component main = AddLWE(10, 17);
 // component main = SubLWE(10, 17);
 // component main = RoundDiv();
 // component main = RoundDivQ(5);
+// component main = ModSwitch(5, 2, 6);
