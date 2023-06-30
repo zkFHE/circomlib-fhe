@@ -41,7 +41,8 @@ template RoundDiv() {
     signal rem_bits[254] <== Num2Bits(254)(rem);
 
     num === den * quot + rem; // correct division
-    rem_bits[252] * rem_bits[253] === 0; // rem < 2^252
+    rem_bits[253] === 0; // rem < 2^253
+    rem_bits[252] === 0; // rem < 2^252
     _ <== LessThan(252)([rem, den]); // rem < den
 
     signal bit_add <== GreaterEqThan(252)([2*rem, den]);
