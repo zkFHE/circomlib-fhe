@@ -51,6 +51,7 @@ template RoundDiv() {
 // computes round(num/Q)
 template RoundDivQ(Q) {
     assert(Q > 0);
+    assert(Q < (1<<252));
 
     signal input num;
     signal output out;
@@ -65,8 +66,11 @@ template RoundDivQ(Q) {
     c1.in <== rem_bits;
     c1.out === 0; // rem < Q
 
-    // possible optimization: leverage previous bit decomposition of rem
-    signal rem2_bits[254] <== Num2Bits(254)(2*rem);
+    signal rem2_bits[254]; // bits of 2*rem
+    rem2_bits[0] <== 0;
+    for (var i=1; i<254; i++) {
+        rem2_bits[i] <== rem_bits[i-1];
+    }
 
     signal bit_add <== CompConstant(Q-1)(rem2_bits);
 
@@ -125,7 +129,7 @@ template KeySwitch(n, N, q, B, kska, kskb) {
 
 // component main = AddLWE(10, 17);
 // component main = SubLWE(10, 17);
-component main = RoundDiv();
+// component main = RoundDiv();
 // component main = RoundDivQ(5);
 // component main = ModSwitch(5, 2, 6);
 // component main = KeySwitch(2, 3, 5, 2, 
