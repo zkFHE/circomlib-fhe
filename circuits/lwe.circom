@@ -38,11 +38,8 @@ template RoundDiv() {
 
     signal quot <-- num \ den;
     signal rem <-- num % den;
-    signal rem_bits[254] <== Num2Bits(254)(rem);
 
     num === den * quot + rem; // correct division
-    rem_bits[253] === 0; // rem < 2^253
-    rem_bits[252] === 0; // rem < 2^252
     _ <== LessThan(252)([rem, den]); // rem < den
 
     signal bit_add <== GreaterEqThan(252)([2*rem, den]);
@@ -128,7 +125,7 @@ template KeySwitch(n, N, q, B, kska, kskb) {
 
 // component main = AddLWE(10, 17);
 // component main = SubLWE(10, 17);
-// component main = RoundDiv();
+component main = RoundDiv();
 // component main = RoundDivQ(5);
 // component main = ModSwitch(5, 2, 6);
 // component main = KeySwitch(2, 3, 5, 2, 
