@@ -3,6 +3,7 @@ pragma circom 2.1.0;
 include "add.circom";
 include "mod.circom";
 include "util.circom";
+include "array_access.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/compconstant.circom";
@@ -101,13 +102,17 @@ template ModSwitch(n, q, Q) {
 }
 
 // switches from key with dimension N to key with dimension n
-// NOT WORKING YET
-template KeySwitch(n, N, q, B, kska, kskb) {
+// the base B is assumed to be a power of 2
+// ksk has dimension N x logb(Q,B) x B x (n+1)
+template KeySwitch(n, N, Q, B, ksk) {
     signal input a_in[N], b_in;
     signal output a_out[n], b_out;
 
     var a[n], b;
-    var digits = logb(q, B);
+    
+    var nbitsB = log2(B);
+    var digitCount = logb(Q, B);
+    var nbits = nbitsB * digitCount;
     
     for (var i=0; i<n; i++) {
         a[i] = 0;
@@ -115,12 +120,27 @@ template KeySwitch(n, N, q, B, kska, kskb) {
     b = b_in;
 
     for (var i=0; i<N; i++) {
-        var atmp = a_in[i];
-        for (var j=0; j<digits; j++) {
-            var a0 = (atmp % B);
-            // invalid expression below -> unknown index a0
-            (a, b) = SubLWE(n, q)(a, b, kska[i][j][a0], kskb[i][j][a0]);
-            atmp \= B;
+
+        var a_bin[nbits] = Num2Bits(nbits)(a_in[i]);
+
+        for (var j=0; j<digitCount; j++) {
+
+            var a0_bin[nbitsB];
+            
+            for (var l=0; l<nbitsB; l++) {
+                a0_bin[l] = a_bin[l + j*nbitsB];
+            }
+
+            var key[n+1] = ArrayAccess(nbitsB, n+1)(ksk[i][j], a0_bin);
+            // key = [a_1,..., a_n, b]
+
+            var key_a[n];
+            for (var h=0; h<n; h++) {
+                key_a[h] = key[h];
+            }
+            var key_b = key[n];
+
+            (a, b) = SubLWE(n, Q)(a, b, key_a, key_b);
         }
     }
 
