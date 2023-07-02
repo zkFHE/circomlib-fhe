@@ -40,7 +40,8 @@ template RoundDiv() {
     signal rem <-- num % den;
 
     num === den * quot + rem; // correct division
-    _ <== LessThan(252)([rem, den]); // rem < den
+    signal less <== LessThan(252)([rem, den]);
+    less === 1; // rem < den
 
     signal bit_add <== GreaterEqThan(252)([2*rem, den]);
 
