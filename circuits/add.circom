@@ -31,12 +31,12 @@ template parallel FastAddMods(l, n, q1, q2, q3, q4, q5, q6) {
 
 template parallel FastSubMod(q) {
 	signal input in[2]; // both inputs need to be in Z/qZ
-	signal sum <== in[0] - in[1];
-	signal quotient <-- sum \ q; // quotient is either 0 or 1
-	signal output out <-- sum % q;
+	signal sub <== in[0] + q - in[1];
+	signal quotient <-- sub \ q; // quotient is either 0 or 1
+	signal output out <-- sub % q;
 
 	LtConstant(q)(out); // Check that remainder is less than q
-	quotient * q + out === sum; // Check that quotient and remainder are correct
+	quotient * q + out === sub; // Check that quotient and remainder are correct
 	quotient * (quotient - 1) === 0; // Check that quotient is in {0, 1}
 }
 
