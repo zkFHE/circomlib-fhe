@@ -127,14 +127,3 @@ template KeySwitch(n, N, q, B, kska, kskb) {
     a_out <== a;
     b_out <== b;
 }
-
-// Examples of instantiations to check compilation:
-
-// component main = AddLWE(512, 1024);
-// component main = SubLWE(512, 1024);
-// component main = RoundDiv();
-// component main = RoundDivQ(1<<14);
-// component main = ModSwitch(512, 1<<10, 1<<14);
-// component main = KeySwitch(2, 3, 5, 2, 
-//     [[[[2, 3], [4, 2]], [[0, 0], [1, 2]], [[4, 3], [2, 1]]], [[[2, 3], [4, 2]], [[0, 0], [1, 2]], [[4, 3], [2, 1]]], [[[2, 3], [4, 2]], [[0, 0], [1, 2]], [[4, 3], [2, 1]]]],
-//     [[[1, 1], [2, 0], [3, 1]], [[1, 1], [2, 0], [3, 1]], [[1, 1], [2, 0], [3, 1]]]);
