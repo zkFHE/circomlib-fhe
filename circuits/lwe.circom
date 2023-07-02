@@ -81,7 +81,7 @@ template RoundDivQ(Q) {
 
 // switches from modulus Q to modulus q
 template ModSwitch(n, q, Q) {
-    assert(q*Q < (1 << 252));
+    assert(log2(q)+log2(Q) < 252);
 
     signal input a_in[n], b_in;
     signal output a_out[n], b_out;
