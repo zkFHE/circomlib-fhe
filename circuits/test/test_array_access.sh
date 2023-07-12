@@ -2,7 +2,9 @@
 
 set -e
 
-circom array_access_test.circom --c -o out
+mkdir -p out
+
+circom array_access_test.circom -l .. --c -o out
 
 cd out/array_access_test_cpp
  

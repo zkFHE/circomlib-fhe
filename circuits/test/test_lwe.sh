@@ -2,7 +2,9 @@
 
 set -e
 
-circom lwe_test.circom --c -o out
+mkdir -p out
+
+circom lwe_test.circom -l .. --c -o out
 
 cd out/lwe_test_cpp
  
