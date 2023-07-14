@@ -50,7 +50,7 @@ template ArrayAccess(k, n) {
 
         prod[p][0] <== index_ext[0][p & 1];
         for (var i=1; i<k; i++) {
-            prod[p][i] <== prod[p][i-1] * index_ext[i][(p & (1<<i)) >> i];
+            prod[p][i] <== prod[p][i-1] * index_ext[i][(p>>i) & 1];
         }
 
         prod_end[p] <== MulArrByCt(n)(prod[p][k-1], arr[p]);
