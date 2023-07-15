@@ -122,7 +122,7 @@ template KeySwitch(n, N, Q, B, ksk) {
                 a0_bin[l] = a_bin[l + j*nbitsB];
             }
 
-            var key[n+1] = ArrayAccess(nbitsB, n+1)(ksk[i][j], a0_bin);
+            var key[n+1] = ArrayAccessBin(nbitsB, n+1)(ksk[i][j], a0_bin);
             // key = [a_1,..., a_n, b]
 
             var key_a[n];
