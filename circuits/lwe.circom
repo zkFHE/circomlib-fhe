@@ -1,12 +1,11 @@
 pragma circom 2.1.0;
 
 include "add.circom";
-include "mod.circom";
+include "fast_compconstant.circom";
 include "util.circom";
 include "array_access.circom";
 include "circomlib/circuits/bitify.circom";
 include "circomlib/circuits/comparators.circom";
-include "circomlib/circuits/compconstant.circom";
 
 // addition of LWE ciphertexts: (a1, b1) + (a2, b2)
 template AddLWE(n, q) {
@@ -60,21 +59,15 @@ template RoundDivQ(Q) {
 
     signal quot <-- num \ Q;
     signal rem <-- num % Q;
-    signal rem_bits[254] <== Num2Bits(254)(rem);
 
     num === Q * quot + rem; // correct division
     
-    component c1 = CompConstant(Q-1);
-    c1.in <== rem_bits;
-    c1.out === 0; // rem < Q
+    LtConstant(Q)(rem); // rem < Q
 
-    signal rem2_bits[254]; // bits of 2*rem
-    rem2_bits[0] <== 0;
-    for (var i=1; i<254; i++) {
-        rem2_bits[i] <== rem_bits[i-1];
-    }
+    var nbits = log2(Q)+1;
+    var rem2_bits[nbits] = Num2Bits(nbits)(2*rem);
 
-    signal bit_add <== CompConstant(Q-1)(rem2_bits);
+    signal bit_add <== IsGeqtConstant(Q, nbits)(rem2_bits);
 
     // out <== quot + (2*rem < Q) ? 0 : 1
     out <== quot + bit_add;
@@ -90,13 +83,11 @@ template ModSwitch(n, q, Q) {
 
     for (var i = 0; i < n; i++) {
         modq[i] = Mod(q);
-        // modq[i].in <== RoundDiv()(q*a_in[i], Q);
         modq[i].in <== RoundDivQ(Q)(q*a_in[i]);
         a_out[i] <== modq[i].out;
     }
 
     modq[n] = Mod(q);
-    // modq[n].in <== RoundDiv()(q*b_in, Q);
     modq[n].in <== RoundDivQ(Q)(q*b_in);
     b_out <== modq[n].out;
 }
