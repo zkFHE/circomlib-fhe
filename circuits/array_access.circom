@@ -112,3 +112,86 @@ template ArrayAccessBin2(k, n) {
 
     out <== sum;
 }
+
+template AddBSK(dg, N) {
+    signal input bsk1[2*dg][2][N], bsk2[2*dg][2][N];
+    signal output out[2*dg][2][N];
+
+    for (var i=0; i<2*dg; i++) {
+        for (var j=0; j<2; j++) {
+            for (var k=0; k<N; k++) {
+                out[i][j][k] <== bsk1[i][j][k] + bsk2[i][j][k];
+            }
+        }
+    }
+}
+
+template MulBSKByCt(dg, N) {
+    signal input ct;
+    signal input bsk[2*dg][2][N];
+    signal output out[2*dg][2][N];
+
+    for (var i=0; i<2*dg; i++) {
+        for (var j=0; j<2; j++) {
+            for (var k=0; k<N; k++) {
+                out[i][j][k] <== ct * bsk[i][j][k];
+            }
+        }
+    }
+}
+
+/*
+    Given an array bsk of n elements and an index,
+    ArrayAccess returns the element of arr at the position given by index,
+    i.e, bsk[index].
+
+    The elements of bsk are arrays of dimension 2dg x 2 x N.
+
+    Based on https://github.com/iden3/circomlib/blob/circom2.1/circuits/program_constructions/array_access.circom
+*/
+template ArrayAccessBSK(n, dg, N) {
+    signal input bsk[n][2*dg][2][N];
+    signal input index;
+    signal output out[2*dg][2][N];
+
+    var sum[2*dg][2][N];
+    for (var i=0; i<2*dg; i++) {
+        for (var j=0; j<2; j++) {
+            for (var k=0; k<N; k++) {
+                sum[i][j][k] = 0;
+            }
+        }
+    }
+
+    signal isequal[n];
+    signal prod[n][2*dg][2][N];
+    for (var p=0; p<n; p++) {
+        isequal[p] <== IsEqual()([p, index]);
+        prod[p] <== MulBSKByCt(dg, N)(isequal[p], bsk[p]);
+        sum = AddBSK(dg, N)(sum, prod[p]);
+    }
+
+    out <== sum;
+}
+
+/*
+    Given an array bsk of 2^k elements and an array index_bin of k elements,
+    ArrayAccess returns the element of arr at the position given by the bit
+    decomposition contained in index_bin, i.e, bsk[bin2int(index_bin)].
+
+    The elements of bsk are arrays of dimension 2dg x 2 x N.
+*/
+template ArrayAccessBinBSK(k, dg, N) {
+    signal input bsk[1<<k][2*dg][2][N];
+    signal input index_bin[k];
+    signal output key[2*dg][2][N];
+
+    var index = 0;
+    var power = 1;
+    for (var i=0; i<k; i++) {
+        index += power * index_bin[i];
+        power *= 2;
+    }
+
+    key <== ArrayAccessBSK(1<<k, dg, N)(bsk, index);
+}
