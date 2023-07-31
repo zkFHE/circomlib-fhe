@@ -11,8 +11,9 @@ include "array_access.circom";
 /*
     Accumulator update as given in (https://eprint.iacr.org/2020/086), 
     and following OpenFHE implementation in:
+    https://github.com/openfheorg/openfhe-development/blob/802b2265dd0033be4ec96aeffb9a6559523170b1/src/binfhe/lib/rgsw-acc-dm.cpp
     
-    Br is assumed to be a power of 2.
+    The refreshing base Br is assumed to be a power of 2.
 */
 template UpdateDM(n, N, q, Q, Br, Bg, bsk) {
     signal input acc_in[2][N];
@@ -51,7 +52,7 @@ template UpdateDM(n, N, q, Q, Br, Bg, bsk) {
 
     As given in (https://eprint.iacr.org/2020/086), 
     and following OpenFHE implementation in:
-
+    https://github.com/openfheorg/openfhe-development/blob/802b2265dd0033be4ec96aeffb9a6559523170b1/src/binfhe/lib/rgsw-acc-dm.cpp
 */
 template AddToAccDM(N, Q, Bg) {
     var dg = logb(Q, Bg);
