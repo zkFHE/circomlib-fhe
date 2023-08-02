@@ -140,10 +140,10 @@ template TestKeySwitch() {
 
     var n = 2;
     var N = 4;
-    var Q = 16;
-    var B = 4;
-    var digitCount = logb(Q, B);
-    var ksk[N][digitCount][B][n+1] = [
+    var Qks = 16;
+    var Bks = 4;
+    var dks = logb(Qks, Bks);
+    var ksk[N][dks][Bks][n+1] = [
         [[[2, 0, 11], [5, 6, 2], [7, 7, 15], [3, 9, 10]],
          [[1, 15, 10], [11, 5, 8], [4, 12, 13], [8, 12, 15]]],
 
@@ -168,8 +168,8 @@ template TestKeySwitch() {
 
     for (var i=0; i<N; i++) {
         var atmp = a_in[i];
-        for (var j=0; j<digitCount; j++) {
-            var a0 = (atmp % B);
+        for (var j=0; j<dks; j++) {
+            var a0 = (atmp % Bks);
 
             var key[n+1] = ksk[i][j][a0];
             var key_a[n];
@@ -178,14 +178,14 @@ template TestKeySwitch() {
             }
             var key_b = key[n];
 
-            (a_res, b_res) = SubLWE(n, Q)(a_res, b_res, key_a, key_b);
+            (a_res, b_res) = SubLWE(n, Qks)(a_res, b_res, key_a, key_b);
             
-            atmp \= B;
+            atmp \= Bks;
         }
     }
 
 
-    var (a_out[n], b_out) = KeySwitch(n, N, Q, B, ksk)(a_in, b_in);
+    var (a_out[n], b_out) = KeySwitch(n, N, Qks, Bks, ksk)(a_in, b_in);
 
 
     var RESULT = 1;

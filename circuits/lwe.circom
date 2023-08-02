@@ -93,17 +93,17 @@ template ModSwitch(n, q, Q) {
 }
 
 // switches from key with dimension N to key with dimension n
-// the base B is assumed to be a power of 2
-// ksk has dimension N x logb(Q,B) x B x (n+1)
-template KeySwitch(n, N, Q, B, ksk) {
+// the base Bks is assumed to be a power of 2
+// ksk has dimension N x logb(Qks,Bks) x Bks x (n+1)
+template KeySwitch(n, N, Qks, Bks, ksk) {
     signal input a_in[N], b_in;
     signal output a_out[n], b_out;
 
     var a[n], b;
     
-    var nbitsB = log2(B);
-    var digitCount = logb(Q, B);
-    var nbits = nbitsB * digitCount;
+    var nbitsB = log2(Bks);
+    var dks = logb(Qks, Bks);
+    var nbits = nbitsB * dks;
     
     for (var i=0; i<n; i++) {
         a[i] = 0;
@@ -114,7 +114,7 @@ template KeySwitch(n, N, Q, B, ksk) {
 
         var a_bin[nbits] = Num2Bits(nbits)(a_in[i]);
 
-        for (var j=0; j<digitCount; j++) {
+        for (var j=0; j<dks; j++) {
 
             var a0_bin[nbitsB];
             
@@ -131,7 +131,7 @@ template KeySwitch(n, N, Q, B, ksk) {
             }
             var key_b = key[n];
 
-            (a, b) = SubLWE(n, Q)(a, b, key_a, key_b);
+            (a, b) = SubLWE(n, Qks)(a, b, key_a, key_b);
         }
     }
 
