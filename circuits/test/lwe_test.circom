@@ -54,54 +54,6 @@ template TestSubLWE() {
     signal output result <-- RESULT;
 }
 
-template TestRoundDiv() {
-    log("\n********** TEST RoundDiv **********\n");
-
-    var n = 8;
-    var num[n] = [4, 5, 7, 6, 3, 4, 4, 0];
-    var den[n] = [2, 2, 3, 4, 3, 8, 9, 5];
-    var res[n] = [2, 3, 2, 2, 1, 1, 0, 0];
-
-    var out[n];
-    for (var i=0; i<n; i++) {
-        out[i] = RoundDiv()(num[i], den[i]);
-    }
-
-    var RESULT = 1;
-    for (var i=0; i<n; i++) {
-        var check = (out[i] == res[i]);
-        log("Test", i, "->", check);
-        RESULT = RESULT && check;
-    }
-
-    log("\nRESULT: ", RESULT, "\n");
-    signal output result <-- RESULT;
-}
-
-template TestRoundDivQ() {
-    log("\n********** TEST RoundDivQ **********\n");
-
-    var n = 8;
-    var num[n] = [4, 5, 7, 6, 3, 4, 4, 0];
-    var den[n] = [2, 2, 3, 4, 3, 8, 9, 5];
-    var res[n] = [2, 3, 2, 2, 1, 1, 0, 0];
-
-    var out[n];
-    for (var i=0; i<n; i++) {
-        out[i] = RoundDivQ(den[i])(num[i]);
-    }
-
-    var RESULT = 1;
-    for (var i=0; i<n; i++) {
-        var check = (out[i] == res[i]);
-        log("Test", i, "->", check);
-        RESULT = RESULT && check;
-    }
-
-    log("\nRESULT: ", RESULT, "\n");
-    signal output result <-- RESULT;
-}
-
 template TestModSwitch() {
     log("\n********** TEST ModSwitch **********\n");
 
@@ -127,6 +79,7 @@ template TestModSwitch() {
 
     var RESULT = 1;
     for (var i=0; i<n; i++) {
+        log("Test", i, "->", (a_out[i] == a_res[i]));
         RESULT = RESULT && (a_out[i] == a_res[i]);
     }
     RESULT = RESULT && (b_out == b_res);
@@ -211,12 +164,6 @@ template TestAll() {
     res = TestSubLWE()();
     total = total && res;
 
-    res = TestRoundDiv()();
-    total = total && res;
-
-    res = TestRoundDivQ()();
-    total = total && res;
-
     res = TestModSwitch()();
     total = total && res;
 
@@ -227,3 +174,4 @@ template TestAll() {
 }
 
 component main = TestAll();
+

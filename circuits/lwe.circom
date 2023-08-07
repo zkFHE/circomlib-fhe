@@ -1,6 +1,7 @@
 pragma circom 2.1.0;
 
 include "add.circom";
+include "mod.circom";
 include "fast_compconstant.circom";
 include "util.circom";
 include "array_access.circom";
@@ -31,65 +32,44 @@ template SubLWE(n, q) {
     b_out <== FastSubMod(q)([b1, b2]);
 }
 
-// computes round(num/den)
-template RoundDiv() {
-    signal input num, den;
+// compute round((q*in)/Q) mod q
+template ModSwitchInt(q, Q) {
+    assert(log2(q)+log2(Q) < 252);
+    signal input in;
     signal output out;
-
-    signal quot <-- num \ den;
-    signal rem <-- num % den;
-
-    num === den * quot + rem; // correct division
-    signal less <== LessThan(252)([rem, den]);
-    less === 1; // rem < den
-
-    signal bit_add <== GreaterEqThan(252)([2*rem, den]);
-
-    // out <== quot + (2*rem < den) ? 0 : 1
-    out <== quot + bit_add;
-}
-
-// computes round(num/Q)
-template RoundDivQ(Q) {
-    assert(Q > 0);
-    assert(Q < (1<<252));
-
-    signal input num;
-    signal output out;
-
-    signal quot <-- num \ Q;
-    signal rem <-- num % Q;
-
-    num === Q * quot + rem; // correct division
     
+    signal prod <== q * in;
+    signal quot <-- prod \ Q;
+    signal rem <-- prod % Q;
+
+    prod === Q * quot + rem; // correct division
     LtConstant(Q)(rem); // rem < Q
+    LtConstant(q)(quot); // quot < q
 
     var nbits = log2(Q)+1;
     var rem2_bits[nbits] = Num2Bits(nbits)(2*rem);
 
     signal bit_add <== IsGeqtConstant(Q, nbits)(rem2_bits);
 
-    // out <== quot + (2*rem < Q) ? 0 : 1
-    out <== quot + bit_add;
+    // total <== quot + (2*rem < Q) ? 0 : 1
+    signal total <== quot + bit_add;
+
+    // reduce mod q
+    signal iszero <== IsEqual()([total, q]);
+    out <== (1-iszero)*total;
 }
 
-// switches from modulus Q to modulus q
+// switches LWE ciphertext from modulus Q to modulus q
 template ModSwitch(n, q, Q) {
     assert(log2(q)+log2(Q) < 252);
 
     signal input a_in[n], b_in;
     signal output a_out[n], b_out;
-    component modq[n+1];
 
     for (var i = 0; i < n; i++) {
-        modq[i] = Mod(q);
-        modq[i].in <== RoundDivQ(Q)(q*a_in[i]);
-        a_out[i] <== modq[i].out;
+        a_out[i] <== ModSwitchInt(q, Q)(a_in[i]);
     }
-
-    modq[n] = Mod(q);
-    modq[n].in <== RoundDivQ(Q)(q*b_in);
-    b_out <== modq[n].out;
+    b_out <== ModSwitchInt(q, Q)(b_in);
 }
 
 // switches from key with dimension N to key with dimension n
