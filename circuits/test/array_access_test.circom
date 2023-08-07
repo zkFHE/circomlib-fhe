@@ -4,8 +4,8 @@ include "array_access.circom";
 include "circomlib/circuits/bitify.circom";
 
 
-template TestArrayAccess() {
-    log("\n********** TEST ArrayAccess **********\n");
+template TestArrayAccess2D() {
+    log("\n********** TEST ArrayAccess2D **********\n");
 
     var N = (1<<4);
     var n = 2;
@@ -13,7 +13,7 @@ template TestArrayAccess() {
 
     var out[N][2];
     for (var i=0; i<N; i++) {
-        out[i] = ArrayAccess(N, n)(arr, i);
+        out[i] = ArrayAccess2D(N, n)(arr, i);
     }
 
     var RESULT = 1;
@@ -26,8 +26,8 @@ template TestArrayAccess() {
     signal output result <-- RESULT;
 }
 
-template TestArrayAccessBin() {
-    log("\n********** TEST ArrayAccessBin **********\n");
+template TestArrayAccess2DBin() {
+    log("\n********** TEST ArrayAccess2DBin **********\n");
 
     var k = 4;
     var n = 2;
@@ -37,7 +37,7 @@ template TestArrayAccessBin() {
     signal bin_dec[1<<k][k];
     for (var i=0; i<(1<<k); i++) {
         bin_dec[i] <== Num2Bits(k)(i);
-        out[i] = ArrayAccessBin(k, n)(arr, bin_dec[i]);
+        out[i] = ArrayAccess2DBin(k, n)(arr, bin_dec[i]);
     }
 
     var RESULT = 1;
@@ -51,8 +51,8 @@ template TestArrayAccessBin() {
 }
 
 
-template TestArrayAccessBin2() {
-    log("\n********** TEST ArrayAccessBin2 **********\n");
+template TestArrayAccess2DBin2() {
+    log("\n********** TEST ArrayAccess2DBin2 **********\n");
 
     var k = 4;
     var n = 2;
@@ -62,7 +62,7 @@ template TestArrayAccessBin2() {
     signal bin_dec[1<<k][k];
     for (var i=0; i<(1<<k); i++) {
         bin_dec[i] <== Num2Bits(k)(i);
-        out[i] = ArrayAccessBin2(k, n)(arr, bin_dec[i]);
+        out[i] = ArrayAccess2DBin2(k, n)(arr, bin_dec[i]);
     }
 
     var RESULT = 1;
@@ -75,8 +75,8 @@ template TestArrayAccessBin2() {
     signal output result <-- RESULT;
 }
 
-template TestArrayAccessBinBSK() {
-    log("\n********** TEST ArrayAccessBinBSK **********\n");
+template TestArrayAccessBSKBin() {
+    log("\n********** TEST ArrayAccessBSKBin **********\n");
 
     var k = 2;
     var dg = 2;
@@ -107,7 +107,7 @@ template TestArrayAccessBinBSK() {
     signal bin_dec[1<<k][k];
     for (var i=0; i<(1<<k); i++) {
         bin_dec[i] <== Num2Bits(k)(i);
-        out[i] = ArrayAccessBinBSK(k, dg, N)(bsk, bin_dec[i]);
+        out[i] = ArrayAccessBSKBin(k, dg, N)(bsk, bin_dec[i]);
     }
 
     var RESULT = 1;
@@ -131,16 +131,16 @@ template TestAll() {
     var total = 1;
     var res;
 
-    res = TestArrayAccess()();
+    res = TestArrayAccess2D()();
     total = total && res;
 
-    res = TestArrayAccessBin()();
+    res = TestArrayAccess2DBin()();
     total = total && res;
 
-    res = TestArrayAccessBin2()();
+    res = TestArrayAccess2DBin2()();
     total = total && res;
 
-    res = TestArrayAccessBinBSK()();
+    res = TestArrayAccessBSKBin()();
     total = total && res;
 
     log("********************\n", "TOTAL RESULT: ", total, "\n********************\n");

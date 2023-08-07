@@ -37,7 +37,7 @@ template UpdateDM(n, N, q, Q, Br, Bg, bsk) {
                 a0_bin[l] = a_bin[l + j*nbitsBr];
             }
 
-            var key[2*dg][2][N] = ArrayAccessBinBSK(nbitsBr, dg, N)(bsk[i][j], a0_bin);
+            var key[2*dg][2][N] = ArrayAccessBSKBin(nbitsBr, dg, N)(bsk[i][j], a0_bin);
 
             acc_mid = AddToAccDM(N, Q, Bg)(acc_mid, key);
         }

@@ -2,6 +2,32 @@ pragma circom 2.1.0;
 
 include "circomlib/circuits/comparators.circom";
 
+
+/*
+    Given an array arr of N elements and an index,
+    ArrayAccess returns the element of arr at the position given by index,
+    i.e, arr[index].
+
+    Based on https://github.com/iden3/circomlib/blob/circom2.1/circuits/program_constructions/array_access.circom
+*/
+template ArrayAccess1D(N) {
+    signal input arr[N];
+    signal input index;
+    signal output out;
+
+    var sum = 0;
+
+    signal isequal[N];
+    signal prod[N];
+    for (var p=0; p<N; p++) {
+        isequal[p] <== IsEqual()([p, index]);
+        prod[p] <== isequal[p] * arr[p];
+        sum += prod[p];
+    }
+
+    out <== sum;
+}
+
 template AddArr(n) {
     signal input arr1[n], arr2[n];
     signal output out[n];
@@ -30,7 +56,7 @@ template MulArrByCt(n) {
 
     Based on https://github.com/iden3/circomlib/blob/circom2.1/circuits/program_constructions/array_access.circom
 */
-template ArrayAccess(N, n) {
+template ArrayAccess2D(N, n) {
     signal input arr[N][n];
     signal input index;
     signal output out[n];
@@ -58,7 +84,7 @@ template ArrayAccess(N, n) {
 
     The elements of arr are arrays of dimension n.
 */
-template ArrayAccessBin(k, n) {
+template ArrayAccess2DBin(k, n) {
     signal input arr[1<<k][n];
     signal input index_bin[k];
     signal output out[n];
@@ -70,7 +96,7 @@ template ArrayAccessBin(k, n) {
         power *= 2;
     }
 
-    out <== ArrayAccess(1<<k, n)(arr, index);
+    out <== ArrayAccess2D(1<<k, n)(arr, index);
 }
 
 /*
@@ -80,7 +106,7 @@ template ArrayAccessBin(k, n) {
 
     The elements of arr are arrays of dimension n.
 */
-template ArrayAccessBin2(k, n) {
+template ArrayAccess2DBin2(k, n) {
     signal input arr[1<<k][n];
     signal input index_bin[k];
     signal output out[n];
@@ -181,7 +207,7 @@ template ArrayAccessBSK(n, dg, N) {
 
     The elements of bsk are arrays of dimension 2dg x 2 x N.
 */
-template ArrayAccessBinBSK(k, dg, N) {
+template ArrayAccessBSKBin(k, dg, N) {
     signal input bsk[1<<k][2*dg][2][N];
     signal input index_bin[k];
     signal output key[2*dg][2][N];
