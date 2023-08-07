@@ -6,6 +6,17 @@ include "mod.circom";
 include "ntt.circom";
 include "circomlib/circuits/multiplexer.circom";
 
+// assumes all elements are already mod q
+template FastMulPointwise(N, q) {
+	signal input in1[N]; 
+	signal input in2[N]; 
+	signal output out[N];
+	
+	for (var i = 0; i < N; i++) {
+		out[i] <== ModBound(q, q)(in1[i] * in2[i]);
+	}
+}
+
 template parallel MulPointwise(N, q) {
 	signal input in1[N]; 
 	signal input in2[N]; 
