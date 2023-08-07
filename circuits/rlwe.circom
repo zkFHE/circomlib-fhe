@@ -31,7 +31,7 @@ template MulRlweRgsw(N, Q, dg) {
     }
     
     for (var i=0; i<2*dg; i++) {
-        var prod[N] = MulPointwise(N, Q)(rlwe[i], rgsw[i][0]);
+        var prod[N] = FastMulPointwise(N, Q)(rlwe[i], rgsw[i][0]);
         sum = AddPoly(N, Q)(sum, prod);
     }
     out[0] <== sum;
@@ -41,7 +41,7 @@ template MulRlweRgsw(N, Q, dg) {
     }
     
     for (var i=0; i<2*dg; i++) {
-        var prod[N] = MulPointwise(N, Q)(rlwe[i], rgsw[i][1]);
+        var prod[N] = FastMulPointwise(N, Q)(rlwe[i], rgsw[i][1]);
         sum = AddPoly(N, Q)(sum, prod);
     }
     out[1] <== sum;
