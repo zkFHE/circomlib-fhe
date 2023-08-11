@@ -16,10 +16,13 @@ function max(x, y) {
 	}
 }
 
+// assumes 0 <= a <= 2^252
 function log2(a) {
 	return logb(a, 2);
 }
 
+// assumes 0 <= a <= b^k where k is the largest integer such that b^k < p/2,
+// where p is circom's prime
 function logb(a, b) {
 	if (a==0) {
 		return 0;
