@@ -13,7 +13,7 @@ template FastMulPointwise(N, q) {
 	signal output out[N];
 	
 	for (var i = 0; i < N; i++) {
-		out[i] <== ModBound(q, q)(in1[i] * in2[i]);
+		out[i] <== ModBound(q, (q-1)*(q-1))(in1[i] * in2[i]);
 	}
 }
 
@@ -60,7 +60,7 @@ template parallel MulsPointwiseNoMod(l, N) {
 	}
 }
 
-template parallel MulNTT(l, N, q1, q2, q3, q4, q5, q6) {
+template parallel MulNTT(l, N, q1, q2, q3, q4, q5, q6, roots) {
     var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in1[l][N];
 	signal input in2[l][N];
@@ -70,10 +70,10 @@ template parallel MulNTT(l, N, q1, q2, q3, q4, q5, q6) {
 		if (q[i] == 0) {
 			// TODO: add explicit constraint that out === 0, or do we discard this in a higher protocol level?
 		} else {
-			var tmp1[N] = NTT(N, q[i])(in1[i]);
-			var tmp2[N] = NTT(N, q[i])(in2[i]);
+			var tmp1[N] = NTT(N, q[i], roots[i])(in1[i]);
+			var tmp2[N] = NTT(N, q[i], roots[i])(in2[i]);
 			var tmp[N] = MulPointwise(N, q[i])(tmp1, tmp2);
-			out[i] <== INTT(N, q[i])(tmp);
+			out[i] <== INTT(N, q[i], roots[i])(tmp);
 		}
 	}
 }

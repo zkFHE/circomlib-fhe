@@ -3,38 +3,28 @@ pragma circom 2.1.0;
 include "fast_compconstant.circom";
 include "util.circom";
 
+// assumes 1 < q <= 2^252, 0 <= in <= 2^252
 template parallel Mod(q) {
 	signal input in;
-	signal quotient;
 	signal output out;
 
-	/*
-	var p = 21888242871839275222246405745257275088548364400416034343698204186575808495617; // TODO: define modularly
-	var delta = p \ q; // TODO: ceil? round?
-	*/
-	var delta = (1 << 253) \ q; // TODO: this might fail if the quotient is too big. However, this prevents issues with ark-circom, and makes the circuit independent of the ZKP field modulus.
-
-	quotient <-- in \ q;
-	out <-- in % q;
-   
-	parallel LtConstant(q)(out);
-	parallel LtConstant(delta)(quotient);
-
-	in === quotient * q + out;
+    out <== ModBound(q, 1 << 252)(in);
 }
 
-// compute in % q, given that 0 <= in < q * b
+// return in % q, given that 0 <= in <= b
+// assumes 1 < q <= 2^252, 0 <= b <= 2^252
 template ModBound(q, b) {
-    assert(log2(q) + log2(b) < 253);
     signal input in;
-	signal quotient;
-	signal output out;
+    signal quotient;
+    signal output out;
 
     quotient <-- in \ q;
 	out <-- in % q;
-   
+
 	LtConstant(q)(out);
-	LtConstant(b)(quotient);
+
+    var bound_quot = b \ q + 1;
+	LtConstant(bound_quot)(quotient);
 
 	in === quotient * q + out;
 }
