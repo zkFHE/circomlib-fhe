@@ -129,6 +129,16 @@ template parallel AddPoly(n, q) {
 	}
 }
 
+template AddPolyNoMod(n) {
+    signal input in1[n];
+    signal input in2[n];
+	signal output out[n];
+	
+	for (var i = 0; i < n; i++) {
+		out[i] <== in1[i] + in2[i];
+	}
+}
+
 template parallel AddPolys(l, n, q1, q2, q3, q4, q5, q6) {
     var q[6] = [q1, q2, q3, q4, q5, q6];
 	signal input in1[l][n];
