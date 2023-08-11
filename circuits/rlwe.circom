@@ -19,6 +19,7 @@ template AddRLWE(N, Q) {
     The RGSW ciphertext (c,c') is given as the 2*dg RLWE ciphertexts
     arranged as: (c_0, c'_0, c_1, c'_1,..., c_{dg-1}, c'_{dg-1}).
     All polynomials are assumed to be in NTT form.
+    Assumes 2*dg*(Q-1)*(Q-1) <= 2^252.
 */
 template MulRlweRgsw(N, Q, dg) {
     signal input rlwe[2*dg][N];
@@ -30,9 +31,13 @@ template MulRlweRgsw(N, Q, dg) {
         sum[i] = 0;
     }
     
+    var bound = 2*dg*(Q-1)*(Q-1);
     for (var i=0; i<2*dg; i++) {
-        var prod[N] = FastMulPointwise(N, Q)(rlwe[i], rgsw[i][0]);
-        sum = AddPoly(N, Q)(sum, prod);
+        var prod[N] = MulPointwiseNoMod(N)(rlwe[i], rgsw[i][0]);
+        sum = AddPolyNoMod(N)(sum, prod);
+    }
+    for (var i=0; i<N; i++) {
+        sum[i] = ModBound(Q, bound)(sum[i]);
     }
     out[0] <== sum;
 
@@ -41,8 +46,11 @@ template MulRlweRgsw(N, Q, dg) {
     }
     
     for (var i=0; i<2*dg; i++) {
-        var prod[N] = FastMulPointwise(N, Q)(rlwe[i], rgsw[i][1]);
-        sum = AddPoly(N, Q)(sum, prod);
+        var prod[N] = MulPointwiseNoMod(N)(rlwe[i], rgsw[i][1]);
+        sum = AddPolyNoMod(N)(sum, prod);
+    }
+    for (var i=0; i<N; i++) {
+        sum[i] = ModBound(Q, bound)(sum[i]);
     }
     out[1] <== sum;
 }
