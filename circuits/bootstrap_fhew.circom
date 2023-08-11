@@ -15,7 +15,7 @@ include "array_access.circom";
     
     The refreshing base Br is assumed to be a power of 2.
 */
-template UpdateDM(n, N, q, Q, Br, Bg, bsk) {
+template UpdateDM(n, N, q, Q, Br, Bg, bsk, roots) {
     signal input acc_in[2][N];
     signal input a[n];
     signal output acc_out[2][N];
@@ -39,7 +39,7 @@ template UpdateDM(n, N, q, Q, Br, Bg, bsk) {
 
             var key[2*dg][2][N] = ArrayAccessBSKBin(nbitsBr, dg, N)(bsk[i][j], a0_bin);
 
-            acc_mid = AddToAccDM(N, Q, Bg)(acc_mid, key);
+            acc_mid = AddToAccDM(N, Q, Bg, roots)(acc_mid, key);
         }
     }
     acc_out <== acc_mid;
@@ -54,21 +54,21 @@ template UpdateDM(n, N, q, Q, Br, Bg, bsk) {
     and following OpenFHE implementation in:
     https://github.com/openfheorg/openfhe-development/blob/802b2265dd0033be4ec96aeffb9a6559523170b1/src/binfhe/lib/rgsw-acc-dm.cpp
 */
-template AddToAccDM(N, Q, Bg) {
+template AddToAccDM(N, Q, Bg, roots) {
     var dg = logb(Q, Bg);
     signal input in[2][N];
     signal input key[2*dg][2][N];
     signal output out[2][N];
 
     signal acc[2][N];
-    acc[0] <== INTT(N, Q)(in[0]);
-    acc[1] <== INTT(N, Q)(in[1]);
+    acc[0] <== INTT(N, Q, roots)(in[0]);
+    acc[1] <== INTT(N, Q, roots)(in[1]);
 
     var acc_dec[2*dg][N] = SignedDigitDecomposeRLWE(Bg, N, Q)(acc);
 
     var acc_dec_ntt[2*dg][N];
     for (var i=0; i<2*dg; i++) {
-        acc_dec_ntt[i] = NTT(N, Q)(acc_dec[i]);
+        acc_dec_ntt[i] = NTT(N, Q, roots)(acc_dec[i]);
     }
     
     out <== MulRlweRgsw(N, Q, dg)(acc_dec_ntt, key);

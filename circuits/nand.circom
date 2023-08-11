@@ -19,9 +19,10 @@ include "bootstrap.circom";
         - bsk: bootstrapping key (dimensions:
             - mode 0: n x ceil(log_{Br}(q)) x Br x 2*ceil(log_{Bg}(Q)) x 2 x N
             )
+        - roots: powers of a root of unity for NTTs. (Array of dimension N)
     See https://eprint.iacr.org/2020/086.pdf Section 3.2
 */
-template NAND(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk) {
+template NAND(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk, roots) {
     signal input a1[n], b1;
     signal input a2[n], b2;
     signal output a_out[n], b_out;
@@ -36,7 +37,7 @@ template NAND(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk) {
         f[i] = (3*q <= 8*i && 8*i < 7*q) ? Q8Neg : Q8;
     }
 
-    signal (a_mid0[N], b_mid0) <== BootstrapCore(mode, n, N, q, Q, Bg, Br, bsk, f)(a_sum, b_sum);
+    signal (a_mid0[N], b_mid0) <== BootstrapCore(mode, n, N, q, Q, Bg, Br, bsk, f, roots)(a_sum, b_sum);
 
     // add Q/8 to get back to Q/4 (mod 2) arithmetic
     signal a_mid1[N] <== a_mid0;

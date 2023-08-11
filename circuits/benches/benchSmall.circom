@@ -7,6 +7,7 @@ include "noise_flooding.circom";
 template BenchSmallNTT(l, n, t, q1, q2, q3, q4, q5, q6) {
 	var secparam = 128;
 	var q[6] = [q1, q2, q3, q4, q5, q6];
+    var roots[l][n];
 	
 	signal input in[2][l][n];
 	signal input noise[secparam][2][l][n];
@@ -20,8 +21,8 @@ template BenchSmallNTT(l, n, t, q1, q2, q3, q4, q5, q6) {
 	LtConstantN(t, n)(w1);
 	LtConstantN(t, n)(w2);
 	
-	signal w1_ntt[l][n] <== NTTsPlain(l, n, q1, q2, q3, q4, q5, q6)(w1);
-	signal w2_ntt[l][n] <== NTTsPlain(l, n, q1, q2, q3, q4, q5, q6)(w2);
+	signal w1_ntt[l][n] <== NTTsPlain(l, n, q1, q2, q3, q4, q5, q6, roots)(w1);
+	signal w2_ntt[l][n] <== NTTsPlain(l, n, q1, q2, q3, q4, q5, q6, roots)(w2);
 	
 	for (var i = 0; i < l; i++) {
 		assert(t < q[i]);

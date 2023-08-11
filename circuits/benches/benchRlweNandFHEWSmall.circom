@@ -20,8 +20,9 @@ template BenchNandFHEWSmall() {
 
     var ksk[N][dks][Bks][n+1];
     var bsk[n][dr][Br][2*dg][2][N];
+    var roots[N];
 
     var a1[n], b1, a2[n], b2;
     
-    var (a_out[n], b_out) = NAND(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk)(a1, b1, a2, b2);
+    var (a_out[n], b_out) = NAND(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk, roots)(a1, b1, a2, b2);
 }

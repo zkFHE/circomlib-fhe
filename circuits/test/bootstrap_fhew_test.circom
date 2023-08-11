@@ -36,6 +36,12 @@ template TestUpdateDM() {
                                         [[[25, 23, 30], [26, 5, 12]], [[16, 23, 11], [24, 4, 0]], [[12, 29, 9], [2, 7, 19]], [[4, 27, 12], [17, 0, 10]]],
                                         [[[20, 9, 19], [23, 4, 28]], [[4, 30, 31], [5, 7, 18]], [[0, 0, 13], [16, 17, 24]], [[9, 10, 19], [29, 23, 23]]]]]];
 
+    var roots[N];
+    roots[0] = 1;
+    for (var i=1; i<N; i++) {
+        roots[i] = (roots[i-1] * 17) % Q;
+    }
+
     var acc_in[2][N] = [[18, 17, 30], [22, 19, 13]];
     var a[n] = [12, 7];
 
@@ -46,12 +52,12 @@ template TestUpdateDM() {
         for (var j=0; j<dr; j++) {
             var cj = (c % Br);
             var key[2*dg][2][N] = bsk[i][j][cj];
-            acc_res = AddToAccDM(N, Q, Bg)(acc_res, key);
+            acc_res = AddToAccDM(N, Q, Bg, roots)(acc_res, key);
             c \= Br;
         }
     }
 
-    var acc_out[2][N] = UpdateDM(n, N, q, Q, Br, Bg, bsk)(acc_in, a);
+    var acc_out[2][N] = UpdateDM(n, N, q, Q, Br, Bg, bsk, roots)(acc_in, a);
 
     var RESULT = 1;
     for (var i=0; i<N; i++) {

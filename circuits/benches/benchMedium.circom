@@ -9,6 +9,7 @@ template BenchMediumNTT(l, n, t, q1, q2, q3, q4, q5, q6) {
 	var secparam = 128;
 	var l_out = l-1;
 	var q[6] = [q1, q2, q3, q4, q5, q6];
+    var roots[l][n];
 	
 	signal input in[2][l][n];
 	signal input w[n];
@@ -20,7 +21,7 @@ template BenchMediumNTT(l, n, t, q1, q2, q3, q4, q5, q6) {
 	signal output flooded[3][l_out][n];
 	
 	LtConstantN(t, n)(w);
-	signal w_ntt[l][n] <== NTTsPlain(l, n, q1, q2, q3, q4, q5, q6)(w);
+	signal w_ntt[l][n] <== NTTsPlain(l, n, q1, q2, q3, q4, q5, q6, roots)(w);
 	
 	for (var i = 0; i < l; i++) {
 		assert(t < q[i]);

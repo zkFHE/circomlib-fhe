@@ -17,8 +17,9 @@ template BenchBootstrapCoreFHEWSmall() {
 
     var bsk[n][dr][Br][2*dg][2][N];
     var f[q];
+    var roots[N];
 
     var a[n], b;
     
-    var (a_out[N], b_out) = BootstrapCore(mode, n, N, q, Q, Bg, Br, bsk, f)(a, b);
+    var (a_out[N], b_out) = BootstrapCore(mode, n, N, q, Q, Bg, Br, bsk, f, roots)(a, b);
 }

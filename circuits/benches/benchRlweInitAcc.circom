@@ -8,8 +8,9 @@ template BenchInitAcc() {
     var q = 1024;
     var Q = 134215681;
     var f[q];
+    var roots[N];
 
     var in;
     
-    var out[2][N] = InitAcc(N, q, Q, f)(in);
+    var out[2][N] = InitAcc(N, q, Q, f, roots)(in);
 }

@@ -16,9 +16,10 @@ template BenchUpdateDMSmall() {
     // multiply the result by 1024 to get the real one
     
     var bsk[n][dr][Br][2*dg][2][N];
+    var roots[N];
 
     var acc_in[2][N];
     var a[n];
     
-    var acc_out[2][N] = UpdateDM(n, N, q, Q, Br, Bg, bsk)(acc_in, a);
+    var acc_out[2][N] = UpdateDM(n, N, q, Q, Br, Bg, bsk, roots)(acc_in, a);
 }

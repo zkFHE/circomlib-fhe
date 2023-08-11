@@ -21,8 +21,9 @@ template BenchBootstrapFHEWSmall() {
     var ksk[N][dks][Bks][n+1];
     var bsk[n][dr][Br][2*dg][2][N];
     var f[q];
+    var roots[N];
 
     var a[n], b;
     
-    var (a_out[n], b_out) = Bootstrap(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk, f)(a, b);
+    var (a_out[n], b_out) = Bootstrap(mode, n, N, q, Q, Qks, Bks, Bg, Br, ksk, bsk, f, roots)(a, b);
 }
