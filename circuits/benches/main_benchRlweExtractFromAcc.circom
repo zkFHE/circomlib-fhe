@@ -1,5 +1,5 @@
 pragma circom 2.1.0;
 
-include "bootstrap.circom";
+include "benchRlweExtractFromAcc.circom";
 
-component main = ExtractFromAcc(1024, 134215681);
+component main = BenchExtractFromAcc();
