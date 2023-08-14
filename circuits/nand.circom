@@ -18,6 +18,7 @@ include "bootstrap.circom";
         - ksk: key switching key (dimensions: N x ceil(log_{Bks}(Q)) x Bks x (n+1))
         - bsk: bootstrapping key (dimensions:
             - mode 0: n x ceil(log_{Br}(q)) x Br x 2*ceil(log_{Bg}(Q)) x 2 x N
+            - mode 1: 1 x n x 2 x 2*dg x 2 x N
             )
         - roots: powers of a root of unity for NTTs. (Array of dimension N)
     See https://eprint.iacr.org/2020/086.pdf Section 3.2

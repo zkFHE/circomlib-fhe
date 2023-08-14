@@ -6,6 +6,7 @@ include "add.circom";
 include "ntt.circom";
 include "lwe.circom";
 include "bootstrap_fhew.circom";
+include "bootstrap_tfhe.circom";
 
 /*
     Initialize accumulator given the body 'in' of an LWE ciphertext (_, in).
@@ -50,6 +51,7 @@ template InitAcc(N, q, Q, f, roots) {
         - Br: refreshing base (only needed for FHEW mode) (power of 2)
         - bsk: bootstrapping key (dimensions:
             - mode 0: n x ceil(log_{Br}(q)) x Br x 2*ceil(log_{Bg}(Q)) x 2 x N
+            - mode 1: 1 x n x 2 x 2*dg x 2 x N
             )
         - roots: powers of a root of unity for NTTs. (Array of dimension N)
 */
@@ -60,6 +62,9 @@ template UpdateAcc(mode, n, N, q, Q, Bg, Br, bsk, roots) {
 
     if (mode == 0) {
         acc_out <== UpdateDM(n, N, q, Q, Br, Bg, bsk, roots)(acc_in, a);
+    }
+    else if(mode == 1) {
+        acc_out <== UpdateCGGI(n, N, q, Q, Bg, bsk, roots)(acc_in, a);
     }
 }
 
@@ -92,6 +97,7 @@ template ExtractFromAcc(N, Q, roots) {
         - Br: refreshing base (only needed for FHEW mode) (power of 2)
         - bsk: bootstrapping key (dimensions:
             - mode 0: n x ceil(log_{Br}(q)) x Br x 2*ceil(log_{Bg}(Q)) x 2 x N
+            - mode 1: 1 x n x 2 x 2*dg x 2 x N
             )
         - f: function to compute while bootstrapping. It maps Z_q to Z_Q and
              is assumed to be negacyclic, i.e., f(v + q/2) = -f(v).
@@ -123,6 +129,7 @@ template BootstrapCore(mode, n, N, q, Q, Bg, Br, bsk, f, roots) {
         - ksk: key switching key (dimensions: N x ceil(log_{Bks}(Q)) x Bks x (n+1))
         - bsk: bootstrapping key (dimensions:
             - mode 0: n x ceil(log_{Br}(q)) x Br x 2*ceil(log_{Bg}(Q)) x 2 x N
+            - mode 1: 1 x n x 2 x 2*dg x 2 x N
             )
         - f: function to compute while bootstrapping. It maps Z_q to Z_Q and
              is assumed to be negacyclic, i.e., f(v + q/2) = -f(v).
