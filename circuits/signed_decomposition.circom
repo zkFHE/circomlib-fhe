@@ -21,7 +21,7 @@ template SignedDigitDecomposeInner(Bg, Q) {
     signal output out[dg];
 
     var carry = 0;
-    signal digits[dg], neg_digits[dg];
+    signal digits[dg];
     for (var i=0; i<dg; i++) {
         var digit = carry;
         var powerof2 = 1;
