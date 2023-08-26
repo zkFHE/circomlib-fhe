@@ -30,6 +30,7 @@ timeline!
 overview of FHEW/TFHE 'lifetime', from inputs to outputs
 
 add input/output spaces
+make distinction of phases explicit?
 ```
 
 ```fig
@@ -37,22 +38,62 @@ Concrete parameters for building a NAND gate
 ```
 
 ## Building blocks
-### LWE ciphertexts
-- mask + value
-- intuition of why this is secure/hard
+
+We can distinguish two major phases in the functional bootstrapping:
+
+1. Accumulator phase: deals with the more complex RLWE and RGSW ciphertexts.
+
+2. Modulus and key switching phase: deals only with the simpler LWE ciphertexts.
+
+We will start by describing the simpler second phase before delving into the accumulator.
+### LWE phase
+
+The LWE symmetric encryption scheme is characterized by:
+
+- Dimension: $n$ ($n \approx 512$)
+- Message modulus: $t$ ($t=2$ for binary messages)
+- Message space: $\mathbb{Z}_t$
+- Ciphertext modulus: $q$ (we will assume that $t$ divides $q$) ($q \approx 1024$)
+- Ciphertext space: $\mathbb{Z}_q$
+- Key space: $\mathbb{Z}_q^n$ (in practice we will work with the subset $\mathbb{Z}_3 ^n \cong \{-1,0,1\}^n$)
+
+Given a message $m \in \mathbb{Z}_t$, its encryption under a key $s \in \mathbb{Z}_q^n$ is an LWE ciphertext of the form:
+
+$$
+    (a, b) = (a, a \cdot s + mq/t + e) \in \mathbb{Z}_q^{n} \times \mathbb{Z}_q
+$$
+where
+- the mask $a \leftarrow \mathbb{Z}_q^n$ is sampled uniformly at random,
+- the noise $e$ is small and sampled from some gaussian distribution.
+
+We will say that $(a,b)$ is an LWE encryption of $m$ or $(a, b) \in \mathrm{LWE}_s^q(m)$. We will omit $q$ and/or $s$ whenever they are not relevant or can be inferred from the context.
+
+Given a ciphertext $(a',b') \in \mathbb{Z}_q^{n+1}$, it is decrypted as follows:
+
+$$
+    m' = \lfloor t(b-a \cdot s)/q\rceil  \mod t
+$$
+
+- Give an intution on its security. Remark importance of noise and the problems of having too much noise.
 
 <!-- No polynomials in the first few building blocks, only LWE ciphertexts -->
 
 ### Addition / Subtraction
-- component-wise mod q, (additively) homomorphic property
+
+The LWE encryption scheme is additively homomorphic. Given two LWE ciphertexts $(a, b), (a', b') \in \mathbb{Z}_q^{n+1}$ then
+$$
+    (a, b) + (a', b') = (a + a', b + b') \in \mathbb{Z}_q^{n+1},
+$$
+where the sum of the masks $a + a'$ is performed component-wise, and all the sums are performed modulo $q$.
 
 ### Modulus-Switching
 
 ### Key-Switching
 
-### RLWE & RGSW ciphertexts
+### Accumulator Phase
 
-### Accumulators
+#### RLWE & RGSW ciphertexts
+
 - Warning, we're going to go back and forth between evaluation and representation forms for polynomials.
   
 #### Initialization
