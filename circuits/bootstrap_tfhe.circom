@@ -8,8 +8,13 @@ include "util.circom";
 include "array_access.circom";
 include "circomlib/circuits/comparators.circom";
 
-// return (X^exponent - 1) in Z_Q[X]/(X^N+1) in NTT form
-// 0 <= exponent < 2N
+/*
+    return (X^exponent - 1) in Z_Q[X]/(X^N+1) in NTT form
+    0 <= exponent < 2N
+    
+    Possible optimization: precompute root^e for all 0 <= e < 2N, where 'root'
+    is the root of unity for the NTT. 
+*/
 template GetBinomial(N, Q, roots) {
     signal input exponent;
     signal output out[N];
