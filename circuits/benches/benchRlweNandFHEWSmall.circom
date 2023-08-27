@@ -7,7 +7,7 @@ template BenchNandFHEWSmall() {
     var mode = 0;
     var n = 1; // n = 512;
     var N = 128; // N = 1024;
-    var q = 1024;
+    var q = 32; // q = 1024;
     var Q = 134215681;
     var Qks = 1 << 14;
     var Bks = 128;
