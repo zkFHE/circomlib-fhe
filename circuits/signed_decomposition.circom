@@ -17,11 +17,12 @@ template SignedDigitDecomposeInner(Bg, Q) {
     var nbitsBg = log2(Bg);
     var nbits = dg * nbitsBg;
 
-    signal input in[nbits];
+    signal input {binary} in[nbits];
     signal output out[dg];
 
     var carry = 0;
     signal digits[dg];
+    signal {binary} bits_digit[dg][nbitsBg];
     for (var i=0; i<dg; i++) {
         var digit = carry;
         var powerof2 = 1;
@@ -30,8 +31,8 @@ template SignedDigitDecomposeInner(Bg, Q) {
             powerof2 <<= 1;
         }
         digits[i] <== digit;
-        var bits_digit[nbitsBg] = Num2Bits(nbitsBg)(digits[i]);
-        carry = IsGeqtConstant(Bg>>1, nbitsBg)(bits_digit);
+        bits_digit[i] <== Num2Bits(nbitsBg)(digits[i]);
+        carry = IsGeqtConstant(Bg>>1, nbitsBg)(bits_digit[i]);
         var neg_digit = digits[i] - Bg + Q;
         out[i] <== carry*(neg_digit - digits[i]) + digits[i];
     }
@@ -50,12 +51,12 @@ template SignedDigitDecompose(Bg, Q) {
     signal input in;
     signal output out[dg];
 
-    var bits_in[nbits] = Num2Bits(nbits)(in);
-    var is_neg = IsGtConstant(Q>>1, nbits)(bits_in);
+    signal {binary} bits_in[nbits] <== Num2Bits(nbits)(in);
+    signal {binary} is_neg <== IsGtConstant(Q>>1, nbits)(bits_in);
     var neg_in = Q - in;
-    var bits_neg_in[nbits] = Num2Bits(nbits)(neg_in);
+    signal {binary} bits_neg_in[nbits] <== Num2Bits(nbits)(neg_in);
 
-    signal bits[nbits];
+    signal {binary} bits[nbits];
     for (var i=0; i<nbits; i++) {
         bits[i] <== is_neg*(bits_neg_in[i] - bits_in[i]) + bits_in[i];
     }

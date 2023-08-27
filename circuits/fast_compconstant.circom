@@ -11,8 +11,8 @@ include "util.circom";
 */
 template GetMostSignificantBit(n) {
     signal input in;
-    signal bits[n];
-    signal output out;
+    signal {binary} bits[n];
+    signal output {binary} out;
 
     var lc1=0;
 
@@ -33,8 +33,8 @@ template GetMostSignificantBit(n) {
 // Improvement over https://github.com/iden3/circomlib/blob/21af0988f8bf1ea5ab2828a52d2d01b3af49e9ef/circuits/compconstant.circom#L29
 template CompConstantBound(ct, nbits) {
     assert(nbits > 0);
-    signal input in[nbits];
-    signal output out;
+    signal input {binary} in[nbits];
+    signal output {binary} out;
 
     var n = (nbits % 2 == 0) ? nbits : nbits + 1;
     var in_ext[n];
@@ -86,37 +86,37 @@ template FastCompConstant(ct) {
     assert(ct > 0);
 	var n = log2(ct);
     signal input in;
-    signal bits[n] <== Num2Bits(n)(in);
-    signal output out <== CompConstantBound(ct, n)(bits);
+    signal {binary} bits[n] <== Num2Bits(n)(in);
+    signal output {binary} out <== CompConstantBound(ct, n)(bits);
 }
 
 // Returns 1 if in (in binary) > ct
 template IsGtConstant(ct, nbits) {
     assert(nbits > 0);
-    signal input in[nbits];
-    signal output out <== CompConstantBound(ct, nbits)(in);
+    signal input {binary} in[nbits];
+    signal output {binary} out <== CompConstantBound(ct, nbits)(in);
 }
 
 // Returns 1 if in (in binary) >= ct
 template IsGeqtConstant(ct, nbits) {
     assert(nbits > 0);
-    signal input in[nbits];
-    signal output out <== CompConstantBound(ct-1, nbits)(in);
+    signal input {binary} in[nbits];
+    signal output {binary} out <== CompConstantBound(ct-1, nbits)(in);
 }
 
 // Returns 1 if in (in binary) < ct
 template IsLtConstant(ct, nbits) {
     assert(nbits > 0);
-    signal input in[nbits];
-    var geqt = CompConstantBound(ct-1, nbits)(in);
-    signal output out <== 1-geqt;
+    signal input {binary} in[nbits];
+    signal {binary} geqt <== CompConstantBound(ct-1, nbits)(in);
+    signal output {binary} out <== 1-geqt;
 }
 
 // Returns 1 if in (in binary) <= ct
 template IsLeqtConstant(ct, nbits) {
     assert(nbits > 0);
-    signal input in[nbits];
-    var gt = CompConstantBound(ct, nbits)(in);
+    signal input {binary} in[nbits];
+    signal {binary} gt <== CompConstantBound(ct, nbits)(in);
     signal output out <== 1-gt;
 }
 

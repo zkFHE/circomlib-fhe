@@ -26,18 +26,19 @@ template UpdateDM(n, N, q, Q, Br, Bg, bsk, roots) {
     var dg = logb(Q, Bg);
 
     var acc_mid[2][N] = acc_in;
+    signal {binary} a_bin[n][nbits];
+    signal {binary} a0_bin[n][dr][nbitsBr];
     for (var i=0; i<n; i++) {
         var a_minus = FastSubMod(q)([0, a[i]]);
-        var a_bin[nbits] = Num2Bits(nbits)(a_minus);
+        a_bin[i] <== Num2Bits(nbits)(a_minus);
 
         for (var j=0; j<dr; j++) {
-            var a0_bin[nbitsBr];
-
+            
             for (var l=0; l<nbitsBr; l++) {
-                a0_bin[l] = a_bin[l + j*nbitsBr];
+                a0_bin[i][j][l] <== a_bin[i][l + j*nbitsBr];
             }
 
-            var key[2*dg][2][N] = ArrayAccessBSKBin(nbitsBr, dg, N)(bsk[i][j], a0_bin);
+            var key[2*dg][2][N] = ArrayAccessBSKBin(nbitsBr, dg, N)(bsk[i][j], a0_bin[i][j]);
 
             acc_mid = AddToAccDM(N, Q, Bg, roots)(acc_mid, key);
         }

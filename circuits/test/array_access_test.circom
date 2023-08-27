@@ -34,7 +34,7 @@ template TestArrayAccess2DBin() {
     var arr[1<<k][2] = [[69, 60], [93, 85], [20, 3], [63, 89], [57, 61], [11, 7], [94, 39], [67, 71], [64, 73], [98, 39], [31, 80], [27, 94], [62, 34], [66, 42], [79, 17], [58, 25]];
 
     var out[1<<k][2];
-    signal bin_dec[1<<k][k];
+    signal {binary} bin_dec[1<<k][k];
     for (var i=0; i<(1<<k); i++) {
         bin_dec[i] <== Num2Bits(k)(i);
         out[i] = ArrayAccess2DBin(k, n)(arr, bin_dec[i]);
@@ -59,7 +59,7 @@ template TestArrayAccess2DBin2() {
     var arr[1<<k][2] = [[69, 60], [93, 85], [20, 3], [63, 89], [57, 61], [11, 7], [94, 39], [67, 71], [64, 73], [98, 39], [31, 80], [27, 94], [62, 34], [66, 42], [79, 17], [58, 25]];
 
     var out[1<<k][2];
-    signal bin_dec[1<<k][k];
+    signal {binary} bin_dec[1<<k][k];
     for (var i=0; i<(1<<k); i++) {
         bin_dec[i] <== Num2Bits(k)(i);
         out[i] = ArrayAccess2DBin2(k, n)(arr, bin_dec[i]);
@@ -104,7 +104,7 @@ template TestArrayAccessBSKBin() {
                                 ];
 
     var out[1<<k][2*dg][2][N];
-    signal bin_dec[1<<k][k];
+    signal {binary} bin_dec[1<<k][k];
     for (var i=0; i<(1<<k); i++) {
         bin_dec[i] <== Num2Bits(k)(i);
         out[i] = ArrayAccessBSKBin(k, dg, N)(bsk, bin_dec[i]);

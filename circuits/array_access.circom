@@ -17,7 +17,7 @@ template ArrayAccess1D(N) {
 
     var sum = 0;
 
-    signal isequal[N];
+    signal {binary} isequal[N];
     signal prod[N];
     for (var p=0; p<N; p++) {
         isequal[p] <== IsEqual()([p, index]);
@@ -66,7 +66,7 @@ template ArrayAccess2D(N, n) {
         sum[i] = 0;
     }
 
-    signal isequal[N];
+    signal {binary} isequal[N];
     signal prod[N][n];
     for (var p=0; p<N; p++) {
         isequal[p] <== IsEqual()([p, index]);
@@ -86,7 +86,7 @@ template ArrayAccess2D(N, n) {
 */
 template ArrayAccess2DBin(k, n) {
     signal input arr[1<<k][n];
-    signal input index_bin[k];
+    signal input {binary} index_bin[k];
     signal output out[n];
 
     var index = 0;
@@ -108,10 +108,10 @@ template ArrayAccess2DBin(k, n) {
 */
 template ArrayAccess2DBin2(k, n) {
     signal input arr[1<<k][n];
-    signal input index_bin[k];
+    signal input {binary} index_bin[k];
     signal output out[n];
 
-    signal index_ext[k][2];
+    signal {binary} index_ext[k][2];
     for (var i=0; i<k; i++) {
         index_ext[i][0] <== 1 - index_bin[i];
         index_ext[i][1] <== index_bin[i];
@@ -122,7 +122,7 @@ template ArrayAccess2DBin2(k, n) {
         sum[i] = 0;
     }
 
-    signal prod[1<<k][k];
+    signal {binary} prod[1<<k][k];
     signal prod_end[1<<k][n];
 
     for (var p=0; p<(1<<k); p++) {
@@ -189,7 +189,7 @@ template ArrayAccessBSK(n, dg, N) {
         }
     }
 
-    signal isequal[n];
+    signal {binary} isequal[n];
     signal prod[n][2*dg][2][N];
     for (var p=0; p<n; p++) {
         isequal[p] <== IsEqual()([p, index]);
@@ -209,7 +209,7 @@ template ArrayAccessBSK(n, dg, N) {
 */
 template ArrayAccessBSKBin(k, dg, N) {
     signal input bsk[1<<k][2*dg][2][N];
-    signal input index_bin[k];
+    signal input {binary} index_bin[k];
     signal output key[2*dg][2][N];
 
     var index = 0;

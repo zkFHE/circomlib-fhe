@@ -10,9 +10,10 @@ template TestCompConstantBound() {
     var res[n] = [0, 0, 1, 1, 1, 0, 1];
 
     var out[n];
+    signal {binary} bits[n][24];
     for (var i=0; i<n; i++) {
-        var bits[24] = Num2Bits(24)(test[i][1]);
-        out[i] = CompConstantBound(test[i][0], 24)(bits);
+        bits[i] <== Num2Bits(24)(test[i][1]);
+        out[i] = CompConstantBound(test[i][0], 24)(bits[i]);
     }
 
     var RESULT = 1;

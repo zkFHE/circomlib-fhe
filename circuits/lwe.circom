@@ -47,15 +47,15 @@ template ModSwitchInt(q, Q) {
     LtConstant(q)(quot); // quot < q
 
     var nbits = log2(Q)+1;
-    var rem2_bits[nbits] = Num2Bits(nbits)(2*rem);
+    signal {binary} rem2_bits[nbits] <== Num2Bits(nbits)(2*rem);
 
-    signal bit_add <== IsGeqtConstant(Q, nbits)(rem2_bits);
+    signal {binary} bit_add <== IsGeqtConstant(Q, nbits)(rem2_bits);
 
     // total <== quot + (2*rem < Q) ? 0 : 1
     signal total <== quot + bit_add;
 
     // reduce mod q
-    signal iszero <== IsEqual()([total, q]);
+    signal {binary} iszero <== IsEqual()([total, q]);
     out <== (1-iszero)*total;
 }
 
@@ -90,19 +90,19 @@ template KeySwitch(n, N, Qks, Bks, ksk) {
     }
     b = b_in;
 
+    signal {binary} a_bin[N][nbits];
+    signal {binary} a0_bin[N][dks][nbitsB];
     for (var i=0; i<N; i++) {
 
-        var a_bin[nbits] = Num2Bits(nbits)(a_in[i]);
+        a_bin[i] <== Num2Bits(nbits)(a_in[i]);
 
         for (var j=0; j<dks; j++) {
-
-            var a0_bin[nbitsB];
             
             for (var l=0; l<nbitsB; l++) {
-                a0_bin[l] = a_bin[l + j*nbitsB];
+                a0_bin[i][j][l] <== a_bin[i][l + j*nbitsB];
             }
 
-            var key[n+1] = ArrayAccess2DBin(nbitsB, n+1)(ksk[i][j], a0_bin);
+            var key[n+1] = ArrayAccess2DBin(nbitsB, n+1)(ksk[i][j], a0_bin[i][j]);
             // key = [a_1,..., a_n, b]
 
             var key_a[n];
