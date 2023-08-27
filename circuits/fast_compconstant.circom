@@ -3,6 +3,31 @@ pragma circom 2.1.0;
 include "circomlib/circuits/bitify.circom";
 include "util.circom";
 
+/*
+    Performs bit decomposition of n bits and returns the most significant bit.
+
+    Based on:
+    https://github.com/iden3/circomlib/blob/cff5ab6288b55ef23602221694a6a38a0239dcc0/circuits/bitify.circom#L25
+*/
+template GetMostSignificantBit(n) {
+    signal input in;
+    signal bits[n];
+    signal output out;
+
+    var lc1=0;
+
+    var e2=1;
+    for (var i = 0; i<n; i++) {
+        bits[i] <-- (in >> i) & 1;
+        bits[i] * (bits[i] - 1) === 0;
+        lc1 += bits[i] * e2;
+        e2 = e2+e2;
+    }
+
+    lc1 === in;
+    out <== bits[n-1];
+}
+
 // Returns 1 if in (in binary) > ct
 // OPTIMIZATION: number of constraints depends on bound on bit-size of in, instead of on 254-bits upper-bound
 // Improvement over https://github.com/iden3/circomlib/blob/21af0988f8bf1ea5ab2828a52d2d01b3af49e9ef/circuits/compconstant.circom#L29
@@ -52,9 +77,7 @@ template CompConstantBound(ct, nbits) {
 
     acc = acc + a - 1;
 
-    component num2bits = Num2Bits(n_half+1);
-    num2bits.in <== acc;
-    out <== num2bits.out[n_half];
+    out <== GetMostSignificantBit(n_half+1)(acc);
 }
 
 // Returns 1 if in > ct
@@ -102,9 +125,9 @@ template parallel LtConstant(ct) {
 	signal input in;
 	var n = log2(ct);
 
-	component n2b = Num2Bits(n+1);
-	n2b.in <== in + (1<<n) - ct;
-	1-n2b.out[n] === 1;
+	component bit = GetMostSignificantBit(n+1);
+	bit.in <== in + (1<<n) - ct;
+	1-bit.out === 1;
 }
 
 // Enforces in[i] < ct for all i
