@@ -12,7 +12,7 @@ Header:
 timeline!
 ```
 
-- Two branches: RLWE (handled elsewhere), and _LWE_-based
+- Two branches: RLWE (handled elsewhere), and *LWE*-based
 - Specifics of LWE: bits/smallint, heavy use of fast bootstrapping
 - Genealogy: FHEW first, then TFHE
 
@@ -88,11 +88,62 @@ where the sum of the masks $a + a'$ is performed component-wise, and all the sum
 
 ### Modulus-Switching
 
+- Allows to change the modulus of an LWE ciphertext.
+
+- Given $(a,b) \in \mathrm{LWE}^Q(m)$ and a target modulus $q$, the following operation will be performed to all the components of the ciphertext:
+$$
+    [x]_{Q:q} = \lfloor qx/Q \rceil
+$$
+- Overall,
+$$
+    \mathrm{ModSwitch}(a, b) = (([a_1]_{Q:q}, \dots, [a_n]_{Q:q}), [b]_{Q:q}) \in \mathrm{LWE}^q(m).
+$$
+
 ### Key-Switching
+
+- Additional elements:
+    - specific modulus for key switching $Q_{ks}$
+    - key swithing base $B_{ks}$
+
+- Input: ciphertext $(a,b) \in \mathrm{LWE}^{Q_{ks}}_z(m)$ under secret key $z \in \Z_{Q_{ks}}^N$
+
+- Output: ciphertext in $\mathrm{LWE}^{Q_{ks}}_s(m)$ under secret key $s \in \Z_{Q_{ks}}^n$
+
+- Requires key switching key $\mathcal{K}=\{k_{i,j,v}\}$:
+    $$
+        k_{i,j,v} \in \mathrm{LWE}^{Q_{ks}}_s(vz_iB^j_ {ks}), 
+    $$
+    $$
+        i \in \{1,\dots,N\}, \; j \in \{0,\dots, d_{ks}-1 \}, \; v \in \{0,\dots,B_{ks}-1\}, \; d_{ks} = \lceil \log_{B_{ks}}Q_{ks} \rceil
+    $$
+
+- Decomposing $a_i = \sum_j a_{i,j}B^j_ {ks}, \; i \in \{1,\dots, N\}, \; a_{i,j} \in \{0,\dots,B_{ks}-1\}$, then
+    $$
+        \mathrm{KeySwitch}((a,b), \mathcal{K}) = (\textbf{0},b) - \sum_{i,j}k_{i,j,a_{i,j}}
+    $$
+
+<!-- Include pseudocode showing loops in more detail?-->
 
 ### Accumulator Phase
 
-#### RLWE & RGSW ciphertexts
+- The accumulator allows to perform the core operation of the bootstrapping, i.e., the homomorphic decryption of the ciphertext.
+
+- It involves three main operations: the initialization of the accumulator, its update, and the extraction of the resulting LWE ciphertext from the accumulator. The update operation is the only operation in which the FHEW and TFHE schemes differ.
+
+- Since we will need to multiply ciphertexts and the LWE encryption scheme is not multiplicatively homomorphic, we will need to rely on more complex schemes: Ring-LWE (RLWE) and Ring-GSW (RGSW).
+
+#### RLWE ciphertexts
+
+The Ring-LWE (RLWE) encryption scheme is characterized by:
+
+- Dimension: $N$ ($N \approx 1024$)
+- Cyclotomic Ring: $\mathcal{R} = \mathbb{Z}[X]/(X^N+1)$ ($\mathcal{R} \cong \mathbb{Z}^N$)
+- Message modulus: $t$ ($t=2$ for binary messages)
+- Message space: $\mathcal{R}_t = \mathbb{Z}_t[X]/(X^N+1) \cong \mathbb{Z}_t^N$
+- Ciphertext modulus: $Q$ ($Q$ prime $\approx 2^{27}$)
+- Ciphertext space: $\mathcal{R}_Q = \mathbb{Z}_Q[X]/(X^N+1) \cong \mathbb{Z}_Q^N$
+- Key space: $\mathcal{R} \cong \mathbb{Z}^N$ (in practice we will work with the subset $\{-1,0,1\}^n$)
+
 
 - Warning, we're going to go back and forth between evaluation and representation forms for polynomials.
   
