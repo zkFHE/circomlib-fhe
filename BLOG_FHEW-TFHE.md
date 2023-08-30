@@ -48,23 +48,19 @@ We can distinguish two major phases in the functional bootstrapping:
 We will start by describing the simpler second phase before delving into the accumulator.
 ### LWE phase
 
-The LWE symmetric encryption scheme is characterized by:
-
-- Dimension: $n$ ($n \approx 512$)
-- Message modulus: $t$ ($t=2$ for binary messages)
-- Message space: $\mathbb{Z}_t$
-- Ciphertext modulus: $q$ (we will assume that $t$ divides $q$) ($q \approx 1024$)
-- Ciphertext space: $\mathbb{Z}_q$
-- Key space: $\mathbb{Z}_q^n$ (in practice we will work with the subset $\mathbb{Z}_3 ^n \cong \{-1,0,1\}^n$)
-
-Given a message $m \in \mathbb{Z}_t$, its encryption under a key $s \in \mathbb{Z}_q^n$ is an LWE ciphertext of the form:
+Given a message $m \in \mathbb{Z}_t$, an LWE encryption of $m$ under a key $s \in \mathbb{Z}_q^n$ is an LWE ciphertext of the form:
 
 $$
     (a, b) = (a, a \cdot s + mq/t + e) \in \mathbb{Z}_q^{n} \times \mathbb{Z}_q
 $$
+
 where
-- the mask $a \leftarrow \mathbb{Z}_q^n$ is sampled uniformly at random,
-- the noise $e$ is small and sampled from some gaussian distribution.
+- $n$ is the dimension ($n \approx 512$)
+- $t$ is the message modulus ($t = 2$ for binary messages)
+- $\Z_t$ is the message space
+- the key space is $\mathbb{Z}_q^n$ (in practice we will work with the subset $\mathbb{Z}_3 ^n \cong \{-1,0,1\}^n$)
+- $a \leftarrow \mathbb{Z}_q^n$ is a uniformly at random sampled mask,
+- $e$ is small noise sampled from some subgaussian distribution.
 
 We will say that $(a,b)$ is an LWE encryption of $m$ or $(a, b) \in \mathrm{LWE}_s^q(m)$. We will omit $q$ and/or $s$ whenever they are not relevant or can be inferred from the context.
 
@@ -81,9 +77,11 @@ $$
 ### Addition / Subtraction
 
 The LWE encryption scheme is additively homomorphic. Given two LWE ciphertexts $(a, b), (a', b') \in \mathbb{Z}_q^{n+1}$ then
+
 $$
     (a, b) + (a', b') = (a + a', b + b') \in \mathbb{Z}_q^{n+1},
 $$
+
 where the sum of the masks $a + a'$ is performed component-wise, and all the sums are performed modulo $q$.
 
 ### Modulus-Switching
@@ -91,10 +89,13 @@ where the sum of the masks $a + a'$ is performed component-wise, and all the sum
 - Allows to change the modulus of an LWE ciphertext.
 
 - Given $(a,b) \in \mathrm{LWE}^Q(m)$ and a target modulus $q$, the following operation will be performed to all the components of the ciphertext:
+
 $$
     [x]_{Q:q} = \lfloor qx/Q \rceil
 $$
+
 - Overall,
+
 $$
     \mathrm{ModSwitch}(a, b) = (([a_1]_{Q:q}, \dots, [a_n]_{Q:q}), [b]_{Q:q}) \in \mathrm{LWE}^q(m).
 $$
@@ -110,14 +111,17 @@ $$
 - Output: ciphertext in $\mathrm{LWE}^{Q_{ks}}_s(m)$ under secret key $s \in \Z_{Q_{ks}}^n$
 
 - Requires key switching key $\mathcal{K}=\{k_{i,j,v}\}$:
+
     $$
         k_{i,j,v} \in \mathrm{LWE}^{Q_{ks}}_s(vz_iB^j_ {ks}), 
     $$
+
     $$
         i \in \{1,\dots,N\}, \; j \in \{0,\dots, d_{ks}-1 \}, \; v \in \{0,\dots,B_{ks}-1\}, \; d_{ks} = \lceil \log_{B_{ks}}Q_{ks} \rceil
     $$
 
 - Decomposing $a_i = \sum_j a_{i,j}B^j_ {ks}, \; i \in \{1,\dots, N\}, \; a_{i,j} \in \{0,\dots,B_{ks}-1\}$, then
+
     $$
         \mathrm{KeySwitch}((a,b), \mathcal{K}) = (\textbf{0},b) - \sum_{i,j}k_{i,j,a_{i,j}}
     $$
@@ -134,22 +138,46 @@ $$
 
 #### RLWE ciphertexts
 
-The Ring-LWE (RLWE) encryption scheme is characterized by:
+- The Ring-LWE (RLWE) scheme can be seen as a generalization of the LWE scheme using polynomials (though we will only consider RLWE masks with one component, whereas we considered LWE masks with n components).
 
-- Dimension: $N$ ($N \approx 1024$)
-- Cyclotomic Ring: $\mathcal{R} = \mathbb{Z}[X]/(X^N+1)$ ($\mathcal{R} \cong \mathbb{Z}^N$)
-- Message modulus: $t$ ($t=2$ for binary messages)
-- Message space: $\mathcal{R}_t = \mathbb{Z}_t[X]/(X^N+1) \cong \mathbb{Z}_t^N$
-- Ciphertext modulus: $Q$ ($Q$ prime $\approx 2^{27}$)
-- Ciphertext space: $\mathcal{R}_Q = \mathbb{Z}_Q[X]/(X^N+1) \cong \mathbb{Z}_Q^N$
-- Key space: $\mathcal{R} \cong \mathbb{Z}^N$ (in practice we will work with the subset $\{-1,0,1\}^n$)
+- Given a message $m \in \mathcal{R}_t$, an RLWE ciphertext encrypting $m$ can be computed as:
 
+$$
+    (a, b) = (a, a \cdot s + mQ/t + e) \in \mathcal{R}_Q \times \mathcal{R}_Q,
+$$
+
+where
+
+- $N$ is the dimension of the cyclotomic ring
+- $\mathcal{R} = \mathbb{Z}[X]/(X^N+1)$ is the cyclotomic ring ($\mathcal{R} \cong \mathbb{Z}^N$)
+- $t$ is the message modulus ($t=2$ for binary messages)
+- $\mathcal{R}_t = \mathbb{Z}_t[X]/(X^N+1)$ is the message space ($\mathcal{R}_t \cong \mathbb{Z}_t^N$)
+- $Q$ is the ciphertext modulus ($Q$ prime $\approx 2^{27}$)
+- $\mathcal{R}_Q = \mathbb{Z}_Q[X]/(X^N+1) \cong \mathbb{Z}_Q^N$
+- the key space is $\mathcal{R}$ (in practice we will work with the subset $\{-1,0,1\}^n$)
+- $a \leftarrow \mathcal{R}$ is a uniformly ar random sampled mask (by sampling each of the N coefficients of the polynomial)
+- $e \in \mathcal{R}$ is a small noise sampled from some subgaussian distribution.
+
+- Decryption is similar to LWE decryption.
+- Security based on RLWE hardness assumption.
+#### RGSW ciphertexts
+
+- Involve a gadget base $B_G$ ($dg = \lceil \log_{B_G}(Q)\rceil$).
+
+- An RGSW ciphertext can be seen as a collection of RLWE ciphertexts.
+
+- $\mathrm{RLWE}_s(m) \subseteq \mathcal{R}_Q \times \mathcal{R}_Q$
+- $\mathrm{RLWE}'_s(m) = (\mathrm{RLWE}_s(m), \mathrm{RLWE}_s(B_Gm), \dots, \mathrm{RLWE}_s(B_G^{dg-1}m)) \subseteq (\mathcal{R}_Q^2)^{dg}$
+- $\mathrm{RGSW}_s(m)=(\mathrm{RLWE}'_s(-s \cdot m), \mathrm{RLWE}'_s(m)) \subseteq ((\mathcal{R}_Q^2)^{dg})^2$
 
 - Warning, we're going to go back and forth between evaluation and representation forms for polynomials.
   
 #### Initialization
 - Common to both schemes
 - Explain using f = id, then show that you can replace this with a "useful" f that has to have some properties (i.e., negacyclic)
+
+- It requires that the LWE ciphertext modulus $q$ divides $2N$, where $N$ is the dimension of the cyclotomic ring. This will allow to embed $\Z_Q[X]/(X^{q/2}+1)$ in $\Z_Q[X]/(X^N+1)$.
+- Input: $b \in \Z_q$ (the second component of an LWE ciphertext), function $f: \Z_q \rightarrow \Z_Q$
 
 <!-- Do we want to explain how to get a negacyclic f' from a given f -->
 
