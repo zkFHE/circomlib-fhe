@@ -57,7 +57,7 @@ $$
 where
 - $n$ is the dimension ($n \approx 512$)
 - $t$ is the message modulus ($t = 2$ for binary messages)
-- $\Z_t$ is the message space
+- $\mathbb{Z}_t$ is the message space
 - the key space is $\mathbb{Z}_q^n$ (in practice we will work with the subset $\mathbb{Z}_3 ^n \cong \{-1,0,1\}^n$)
 - $a \leftarrow \mathbb{Z}_q^n$ is a uniformly at random sampled mask,
 - $e$ is small noise sampled from some subgaussian distribution.
@@ -106,9 +106,9 @@ $$
     - specific modulus for key switching $Q_{ks}$
     - key swithing base $B_{ks}$
 
-- Input: ciphertext $(a,b) \in \mathrm{LWE}^{Q_{ks}}_z(m)$ under secret key $z \in \Z_{Q_{ks}}^N$
+- Input: ciphertext $(a,b) \in \mathrm{LWE}^{Q_{ks}}_z(m)$ under secret key $z \in \mathbb{Z}_{Q_{ks}}^N$
 
-- Output: ciphertext in $\mathrm{LWE}^{Q_{ks}}_s(m)$ under secret key $s \in \Z_{Q_{ks}}^n$
+- Output: ciphertext in $\mathrm{LWE}^{Q_{ks}}_s(m)$ under secret key $s \in \mathbb{Z}_{Q_{ks}}^n$
 
 - Requires key switching key $\mathcal{K}=\{k_{i,j,v}\}$:
 
@@ -176,8 +176,8 @@ where
 - Common to both schemes
 - Explain using f = id, then show that you can replace this with a "useful" f that has to have some properties (i.e., negacyclic)
 
-- It requires that the LWE ciphertext modulus $q$ divides $2N$, where $N$ is the dimension of the cyclotomic ring. This will allow to embed $\Z_Q[X]/(X^{q/2}+1)$ in $\Z_Q[X]/(X^N+1)$.
-- Input: $b \in \Z_q$ (the second component of an LWE ciphertext), function $f: \Z_q \rightarrow \Z_Q$
+- It requires that the LWE ciphertext modulus $q$ divides $2N$, where $N$ is the dimension of the cyclotomic ring. This will allow to embed $\mathbb{Z}_Q[X]/(X^{q/2}+1)$ in $\mathbb{Z}_Q[X]/(X^N+1)$.
+- Input: $b \in \mathbb{Z}_q$ (the second component of an LWE ciphertext), function $f: \mathbb{Z}_q \rightarrow \mathbb{Z}_Q$
 
 <!-- Do we want to explain how to get a negacyclic f' from a given f -->
 
