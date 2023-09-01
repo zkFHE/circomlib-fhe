@@ -10,14 +10,13 @@ include "bootstrap_tfhe.circom";
 
 /*
     Initialize accumulator given the body 'in' of an LWE ciphertext (_, in).
-    Return an accumulator in RLWE in evaluation format for the function f.
+    Return an accumulator in RLWE in coefficient form for the function f.
         - q: modulus for 'in'. It is assumed that q|2N.
-        - (N, Q): RLWE parameters.
+        - N: RLWE dimension.
         - f: function which maps Z_q to Z_Q and is assumed to be negacyclic, 
              i.e., f(v + q/2) = -f(v). (Array of dimension q)
-        - roots: powers of a root of unity for NTTs. (Array of dimension N)
 */
-template InitAcc(N, q, Q, f, roots) {
+template InitAcc(N, q, f) {
     signal input in;
     signal output out[2][N];
 
@@ -38,12 +37,13 @@ template InitAcc(N, q, Q, f, roots) {
         c[i*factor] = ArrayAccess1D(q)(f, index);
     }
     
-    out[1] <== NTT(N, Q, roots)(c);
+    out[1] <== c;
 }
 
 /*
-    Return the updated accumulator 'acc_out' in RLWE given the accumulator 'acc_in'
-    in RLWE and the mask 'a' for an LWE ciphertext (a,_).
+    Return the updated accumulator 'acc_out' in RLWE (coefficient form) given
+    the accumulator 'acc_in' in RLWE (coefficient form) and the mask 'a' for an 
+    LWE ciphertext (a,_).
         - mode: 0 -> FHEW (DM bootstrap); 1 -> TFHE (CGGI boostrap)
         - (n, q): LWE parameters
         - (N, Q): RLWE parameters
@@ -69,23 +69,21 @@ template UpdateAcc(mode, n, N, q, Q, Bg, Br, bsk, roots) {
 }
 
 /*
-    Extract an LWE ciphertext (a, b) given an RLWE accumulator 'in'.
-        - (N, Q): RLWE parameters
-        - roots: powers of a root of unity for NTTs. (Array of dimension N)
+    Extract an LWE ciphertext (a, b) given an RLWE accumulator 'in' in
+    coefficient form.
+        - N: RLWE dimension
+    
+    Warning: 'a' needs to be reordered if we want it to match the original
+    bootstrapping key. Otherwise, the difference of keys can be dealt with
+    in the key switching procedure
 */
-template ExtractFromAcc(N, Q, roots) {
+template ExtractFromAcc(N) {
     signal input in[2][N];
     signal output a[N];
     signal output b;
 
-    var in0_rev[N];
-    for (var i=0; i<N; i++) {
-        in0_rev[i] = in[0][N-i-1];
-    }
-    a <== INTT(N, Q, roots)(in0_rev);
-
-    var in1_intt[N] = INTT(N, Q, roots)(in[1]);
-    b <== in1_intt[0];
+    a <== in[0];
+    b <== in[1][0];
 }
 
 /*
@@ -108,11 +106,11 @@ template BootstrapCore(mode, n, N, q, Q, Bg, Br, bsk, f, roots) {
     signal input a_in[n], b_in;
     signal output a_out[N], b_out;
 
-    var acc[2][N] = InitAcc(N, q, Q, f, roots)(b_in);
+    var acc[2][N] = InitAcc(N, q, f)(b_in);
 
     acc = UpdateAcc(mode, n, N, q, Q, Bg, Br, bsk, roots)(acc, a_in);
 
-    (a_out, b_out) <== ExtractFromAcc(N, Q, roots)(acc);
+    (a_out, b_out) <== ExtractFromAcc(N)(acc);
 }
 
 /*

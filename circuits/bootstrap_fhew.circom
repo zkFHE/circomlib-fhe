@@ -13,6 +13,8 @@ include "array_access.circom";
     and following OpenFHE implementation in:
     https://github.com/openfheorg/openfhe-development/blob/802b2265dd0033be4ec96aeffb9a6559523170b1/src/binfhe/lib/rgsw-acc-dm.cpp
     
+    Both acc_in and acc_out are in coefficient form.
+
     The refreshing base Br is assumed to be a power of 2.
 */
 template UpdateDM(n, N, q, Q, Br, Bg, bsk, roots) {
@@ -47,9 +49,9 @@ template UpdateDM(n, N, q, Q, Br, Bg, bsk, roots) {
 }
 
 /*
-    Given the accumulator (in) in RLWE and the key (key) in RGSW
-    (both in NTT form), return the updated accumulator obtained by
-    multiplying it by the key.
+    Given the accumulator (in) in RLWE (in coefficient form) and the key (key) 
+    in RGSW (in evaluation form), return the updated accumulator (in coefficient
+    form) obtained by multiplying it by the key.
 
     As given in (https://eprint.iacr.org/2020/086), 
     and following OpenFHE implementation in:
@@ -61,16 +63,15 @@ template AddToAccDM(N, Q, Bg, roots) {
     signal input key[2*dg][2][N];
     signal output out[2][N];
 
-    signal acc[2][N];
-    acc[0] <== INTT(N, Q, roots)(in[0]);
-    acc[1] <== INTT(N, Q, roots)(in[1]);
-
-    var acc_dec[2*dg][N] = SignedDigitDecomposeRLWE(Bg, N, Q)(acc);
+    var acc_dec[2*dg][N] = SignedDigitDecomposeRLWE(Bg, N, Q)(in);
 
     var acc_dec_ntt[2*dg][N];
     for (var i=0; i<2*dg; i++) {
         acc_dec_ntt[i] = NTT(N, Q, roots)(acc_dec[i]);
     }
     
-    out <== MulRlweRgsw(N, Q, dg)(acc_dec_ntt, key);
+    var acc_out[2][N] = MulRlweRgsw(N, Q, dg)(acc_dec_ntt, key);
+
+    out[0] <== INTT(N, Q, roots)(acc_out[0]);
+    out[1] <== INTT(N, Q, roots)(acc_out[1]);
 }

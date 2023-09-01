@@ -9,7 +9,7 @@ include "array_access.circom";
 include "circomlib/circuits/comparators.circom";
 
 /*
-    return (X^exponent - 1) in Z_Q[X]/(X^N+1) in NTT form
+    return (X^exponent - 1) in Z_Q[X]/(X^N+1) in evaluation form
     0 <= exponent < 2N
     
     Possible optimization: precompute root^e for all 0 <= e < 2N, where 'root'
@@ -41,6 +41,8 @@ template GetBinomial(N, Q, roots) {
     Accumulator update as given in (https://eprint.iacr.org/2020/086), 
     and following OpenFHE implementation in:
     https://github.com/openfheorg/openfhe-development/blob/802b2265dd0033be4ec96aeffb9a6559523170b1/src/binfhe/lib/rgsw-acc-cggi.cpp
+
+    Both acc_in and acc_out are in coefficient form.
 */
 template UpdateCGGI(n, N, q, Q, Bg, bsk, roots) {
     signal input acc_in[2][N];
@@ -58,26 +60,23 @@ template UpdateCGGI(n, N, q, Q, Bg, bsk, roots) {
 }
 
 /*
-    Given the accumulator (in) in RLWE and the keys (key1, key2) in RGSW
-    (all in NTT form), return the updated accumulator obtained by
-    computing: ACC := ACC + (ACC x key1)*binomial + (ACC x key2)*binomialNeg.
+    Given the accumulator (acc) in RLWE (in coefficient form) and the keys 
+    (key1, key2) in RGSW (in evaluation form), return the updated accumulator 
+    (in coefficient form) obtained by computing: 
+    out := acc + (acc x key1)*binomial + (acc x key2)*binomialNeg.
 
     As given in (https://eprint.iacr.org/2020/086), 
     and following OpenFHE implementation in:
     https://github.com/openfheorg/openfhe-development/blob/802b2265dd0033be4ec96aeffb9a6559523170b1/src/binfhe/lib/rgsw-acc-cggi.cpp
 
-    Assumes 4*dg*(Q-1)^3 + 2*(Q-1) <= 2^252 (to delay modular reduction)
+    Assumes 4*dg*(Q-1)^3 <= 2^252 (to delay modular reduction)
 */
 template AddToAccCGGI(N, Q, Bg, roots) {
     var dg = logb(Q, Bg);
     signal input c;
-    signal input acc_ntt[2][N];
+    signal input acc[2][N];
     signal input key1[2*dg][2][N], key2[2*dg][2][N];
     signal output out[2][N];
-
-    signal acc[2][N];
-    acc[0] <== INTT(N, Q, roots)(acc_ntt[0]);
-    acc[1] <== INTT(N, Q, roots)(acc_ntt[1]);
 
     var acc_dec[2*dg][N] = SignedDigitDecomposeRLWE(Bg, N, Q)(acc);
 
@@ -91,34 +90,34 @@ template AddToAccCGGI(N, Q, Bg, roots) {
     var binomial[N] = GetBinomial(N, Q, roots)(exponent); // X^c - 1
     var binomial_neg[N] = GetBinomial(N, Q, roots)(exponent_neg); // X^{-c} - 1
     
-    var acc_mid[2][N];
-    var tmp[2][N];
+    var acc1[2][N], acc2[2][N];
     var bound = 0;
 
-    // tmp := (ACC x key1)*binomial
-    tmp = MulRlweRgswNoMod(N, dg)(acc_dec_ntt, key1);
-    tmp[0] = MulPointwiseNoMod(N)(tmp[0], binomial);
-    tmp[1] = MulPointwiseNoMod(N)(tmp[1], binomial);
+    // acc1 := (acc x key1)*binomial
+    acc1 = MulRlweRgswNoMod(N, dg)(acc_dec_ntt, key1);
+    acc1[0] = MulPointwiseNoMod(N)(acc1[0], binomial);
+    acc1[1] = MulPointwiseNoMod(N)(acc1[1], binomial);
     bound += 2*dg*(Q-1)*(Q-1)*(Q-1);
 
-    // acc_mid := ACC + (ACC x key1)*binomial
-    acc_mid = AddRLWENoMod(N)(acc_ntt, tmp);
-    bound += Q-1;
-
-    // tmp := (ACC x key2)*binomialNeg
-    tmp = MulRlweRgswNoMod(N, dg)(acc_dec_ntt, key2);
-    tmp[0] = MulPointwiseNoMod(N)(tmp[0], binomial_neg);
-    tmp[1] = MulPointwiseNoMod(N)(tmp[1], binomial_neg);
+    // acc2 := (acc x key2)*binomialNeg
+    acc2 = MulRlweRgswNoMod(N, dg)(acc_dec_ntt, key2);
+    acc2[0] = MulPointwiseNoMod(N)(acc2[0], binomial_neg);
+    acc2[1] = MulPointwiseNoMod(N)(acc2[1], binomial_neg);
     bound += 2*dg*(Q-1)*(Q-1)*(Q-1);
 
-    // acc_mid := ACC + (ACC x key1)*binomial + (ACC x key2)*binomialNeg
-    acc_mid = AddRLWENoMod(N)(acc_mid, tmp);
-    bound += Q-1;
+    // acc_mid := (acc x key1)*binomial + (acc x key2)*binomialNeg
+    var acc_mid[2][N] = AddRLWENoMod(N)(acc1, acc2);
 
     // reduction mod Q
     for (var i=0; i<2; i++) {
         for (var j=0; j<N; j++) {
-            out[i][j] <== ModBound(Q, bound)(acc_mid[i][j]);
+            acc_mid[i][j] = ModBound(Q, bound)(acc_mid[i][j]);
         }
     }
+
+    acc_mid[0] = INTT(N, Q, roots)(acc_mid[0]);
+    acc_mid[1] = INTT(N, Q, roots)(acc_mid[1]);
+
+    // out := acc + (acc x key1)*binomial + (acc x key2)*binomialNeg
+    out <== AddRLWE(N, Q)(acc, acc_mid);
 }

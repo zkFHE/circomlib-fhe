@@ -10,8 +10,8 @@ template BenchAddToAccCGGI() {
     var roots[N];
 
     var c;
-    var acc_ntt[2][N];
+    var acc[2][N];
     var key1[2*dg][2][N], key2[2*dg][2][N];
     
-    var out[2][N] = AddToAccCGGI(N, Q, Bg, roots)(c, acc_ntt, key1, key2);
+    var out[2][N] = AddToAccCGGI(N, Q, Bg, roots)(c, acc, key1, key2);
 }
