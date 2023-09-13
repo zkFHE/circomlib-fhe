@@ -100,7 +100,7 @@ This approach assumes that the input `in` is less than $2^{253}$, what could be 
 
 By compiling the circuit we can check the number of constraints that this gadget generates for a given modulus. Interestingly, the number of constraints is $254$ independently of the modulus used. Apart for the constraint for the division, the gadget `LtConstant(q)` introduces $\log_2(q)$ constraints and the gadget `LtConstant((2**253)\q)` introduces $\log_2(2^{253}/q) = 253 - \log_2(q)$ constraints.
 
-Considering that we will make heavy use of the modular reduction, it is worth taking a closer look in case we can reduce the number of constraints. An example will hint at the solution. In the context of an RLWE-RGSW multiplication, we need to reduce modulo $Q$ values which can be at most $2^{57}$. However, with the gadget we just introduced, the quotient will be bounded assuming that the input can be up to $2^{253}$. Following the previous analysis, that bound on the quotient takes 226 out of the total 254 constraints.
+Considering that we will make heavy use of the modular reduction, it is worth taking a closer look in case we can reduce the number of constraints. An example will hint at one issue to solve. In the context of an RLWE-RGSW multiplication, we need to perform a reduction modulo $Q$ of values which can be at most $2^{57}$. However, with the gadget we just introduced, the quotient will be bounded assuming that the input can be up to $2^{253}$. Following the previous analysis, that bound on the quotient takes 226 out of the total 254 constraints.
 
 Essentially, we can significantly reduce the number of constraints by introducing a tighter bound on the quotient based on a known bound on the input. We can modify our gadget to receive the bound on the input as a parameter.
 
@@ -125,6 +125,90 @@ template ModBound(q, b) {
 With this new approach, the number of constraints generated is $log_2(b) + 1$ assuming that $b >= q$. For the previous example, this results in 58 constraints, as opposed to the 254 from the other approach.
 
 ## Signed Decomposition
+
+The signed decomposition is an expensive operation that takes place in the RLWE-RGSW multiplication. For the purpose of this description we will think of it independently from FHE.
+
+As a first approach, we can describe this operation over arbitrary integers. Given an integer $a \in \mathbb{Z}$ and a base $B \in \mathbb{N}$, the idea is to decompose $a$ in base $B$ as a vector $(a_0, \dots, a_{k-1}) \in \mathbb{Z}^k$ satisfying
+
+$$a = \sum_{i=0}^{k-1}a_i B^i.$$
+
+In a standard digit decomposition we want that $a_i \in [0, B)$ for all $i \in \{0,...,k-1\}$. In a signed decomposition, however, the components need to be $a_i \in [-B/2, B/2]$ for all $i \in \{0,\dots,k-1\}$.
+
+We move now to the setting of integers modulo $Q$ that we will be working with. Given $a \in \mathbb{Z}_Q$ and a base $B \in \mathbb{N}$, a signed decomposition of $a$ in base $B$ is a vector $(a_0,\dots,a_{dg-1}) \in \mathbb{Z}^{dg}$ satisfying
+
+$$a = \sum_{i=0}^{dg-1}a_iB^i \mod Q$$
+
+and such that $a_i \in [0,B/2] \cup [Q-B/2, Q)$ for all $i \in \{0,\dots,dg-1\}$. The value $dg$ denotes the number of digits of $Q$ in base $B$, i.e., $dg = \lceil \log_B(Q)\rceil$. Note that the interval $[Q-B/2, Q)$ corresponds to the interval of negative integers $[-B/2, 0)$ shifted modulo $Q$.
+
+With such restrictions, the maximum decomposable number is
+
+$$\sum_{i=0}^{dg-1}(B/2)B^i = (B/2)\cdot \frac{B^{dg}-1}{B-1} \geq (B/2)\cdot \frac{Q-1}{B-1} \geq \frac{Q-1}{2}.$$
+
+This means that we can effectively decompose with $dg$ digits any integer in the range $[0,Q/2)$. However, this will not always be the case for integers in the range $[Q/2, Q)$. 
+
+In order to deal that issue, whenever the input integer $a \in \mathbb{Z}_Q$ is in the range $[Q/2, Q)$, we can signed decompose $Q-a \in (0, Q/2]$ and then negate modulo $Q$ all the components of the decomposition. Note that for an odd $Q$ all integers in $\mathbb{Z}_Q$ are guaranteed to be decomposable with this approach, and in practice we will work with $Q$ a prime of 27 bits.
+
+We will assume for now that we have a `SignedDigitDecomposeInner` function that receives an integer $in \in [0, Q/2)$ in binary representation and returns its signed decomposition. Let's see how to use it to solve the general case for $in \in [0, Q)$ following the described approach. The main problem is that we cannot directly condition on whether $a$ is in the lower or upper half of the interval, since that can't be directly expressed as a R1CS constraint. We will need to rely on a compartor gadget `IsGtConstant` that returns $1$ whenever the input is greater than the given constant and $0$ otherwise.
+
+Here is a Circom solution to the general case:
+
+```
+/*
+    Given in an integer mod Q, return its signed decomposition in base Bg.
+    Denoting dg = ceil(log_{Bg}(Q)), the output is a vector of dg components 
+    where each component is in the range [0, Bg/2]U[Q-Bg/2, Q)
+    and in = sum_i(out[i]*Bg^i) mod Q.
+*/
+template SignedDigitDecompose(Bg, Q) {
+    var dg = logb(Q, Bg);
+    var nbits = log2(Bg) * dg;
+
+    signal input in;
+    signal output out[dg];
+
+    // compute binary decomposition of in
+    var bits_in[nbits] = Num2Bits(nbits)(in);
+
+    // is_neg = (in > Q/2) ? 1 : 0
+    var is_neg = IsGtConstant(Q>>1, nbits)(bits_in);
+
+    // compute binary decomposition of Q-in
+    var bits_neg_in[nbits] = Num2Bits(nbits)(Q - in);
+
+    // select the input bits for SignedDigitDecomposeInner
+    signal bits[nbits];
+    for (var i=0; i<nbits; i++) {
+        // bits[i] = (in > Q/2) ? bits_neg_in[i] : bits_in[i]
+        bits[i] <== is_neg*(bits_neg_in[i] - bits_in[i]) + bits_in[i];
+    }
+
+    // solve the particular case for the [0, Q/2) range
+    var dec[dg] = SignedDigitDecomposeInner(Bg, Q)(bits);
+
+    // negate the components for the case (in > Q/2)
+    signal neg_dec[dg];
+    for (var i=0; i<dg; i++){
+        // neg_dec[i] = (-dec[i] mod Q)
+        neg_dec[i] <== FastSubMod(Q)([0, dec[i]]);
+        
+        // out[i] = (in > Q/2) : neg_dec[i] : dec[i]
+        out[i] <== is_neg*(neg_dec[i] - dec[i]) + dec[i];
+    }
+}
+```
+
+Note that we need to compute the binary decomposition of both $in$ and $Q-in$, since the decomposition of $in$ is always needed for the comparison gadget. 
+
+An alternative solution to the proposed approach would be to call `SignedDigitDecomposeInner` for both $in$ and $Q-in$ and then select the desired result based on the comparison value. However, that would result in performing almost twice as many computations. A trivial but important observation is that, whenever possible, it is preferrable to select the input to the computation rather than the output.
+
+
+Overall, we have seen how to reduce our general problem to the problem of computing the signed decomposition of an integer $a \in [0, Q/2)$ in base $B$. In order to arithmetize this computation, it will be really convenient to assume that the base $B$ is a power of $2$, as this will always be the case in our FHE context.
+
+The strategy we will follow is:
+
+1. Decompose $a$ in base $2$.
+2. Compute the standard digit decomposition of $a$ in base $B$ by grouping the bits corresponding to each digit in base $B$. Here we are leveraging the fact that $B$ is a power of $2$. After this, the $dg$ components will be in the range $[0, B)$.
+3. Go through the standard digit decomposition from the least significant digit to the most significant digit. If the digit is greater than $B/2$ then subtract $B$ to this digit and sum $1$ to the following digit.
 
 - Present latex
 - Issue + solution
