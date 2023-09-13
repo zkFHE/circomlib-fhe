@@ -6,10 +6,10 @@ include "fast_compconstant.circom";
 include "circomlib/circuits/bitify.circom";
 
 /*
-    Given in (in binary) an integer mod Q, return its signed decomposition
-    in base Bg. Denoting dg = ceil(log_{Bg}(Q)), the output is a vector of 
-    dg components where each component is in the range [0, Bg/2)U[Q-Bg/2, Q)
-    and in = sum_i(out[i]*Bg^i) mod Q.
+    Given in an integer mod Q, return its signed decomposition in base Bg. 
+    Denoting dg = ceil(log_{Bg}(Q)), the output is a vector of dg components 
+    each component is in the range [0, Bg/2]U[Q-Bg/2, Q) and 
+    in = sum_i(out[i]*Bg^i) mod Q.
     in is assumed to allow for a signed decomposition of dg digits
 */
 template SignedDigitDecomposeInner(Bg, Q) {
@@ -17,8 +17,10 @@ template SignedDigitDecomposeInner(Bg, Q) {
     var nbitsBg = log2(Bg);
     var nbits = dg * nbitsBg;
 
-    signal input {binary} in[nbits];
+    signal input in;
     signal output out[dg];
+
+    signal {binary} bits_in[nbits] <== Num2Bits(nbits)(in);
 
     var carry = 0;
     signal digits[dg];
@@ -27,12 +29,12 @@ template SignedDigitDecomposeInner(Bg, Q) {
         var digit = carry;
         var powerof2 = 1;
         for (var j=0; j<nbitsBg; j++) {
-            digit += powerof2 * in[j + i*nbitsBg];
+            digit += powerof2 * bits_in[j + i*nbitsBg];
             powerof2 <<= 1;
         }
         digits[i] <== digit;
         bits_digit[i] <== Num2Bits(nbitsBg)(digits[i]);
-        carry = IsGeqtConstant(Bg>>1, nbitsBg)(bits_digit[i]);
+        carry = IsGtConstant(Bg>>1, nbitsBg)(bits_digit[i]);
         var neg_digit = digits[i] - Bg + Q;
         out[i] <== carry*(neg_digit - digits[i]) + digits[i];
     }
@@ -53,15 +55,11 @@ template SignedDigitDecompose(Bg, Q) {
 
     signal {binary} bits_in[nbits] <== Num2Bits(nbits)(in);
     signal {binary} is_neg <== IsGtConstant(Q>>1, nbits)(bits_in);
+    
     var neg_in = Q - in;
-    signal {binary} bits_neg_in[nbits] <== Num2Bits(nbits)(neg_in);
+    var new_in = is_neg*(neg_in - in) + in;
 
-    signal {binary} bits[nbits];
-    for (var i=0; i<nbits; i++) {
-        bits[i] <== is_neg*(bits_neg_in[i] - bits_in[i]) + bits_in[i];
-    }
-
-    var dec[dg] = SignedDigitDecomposeInner(Bg, Q)(bits);
+    var dec[dg] = SignedDigitDecomposeInner(Bg, Q)(new_in);
 
     signal neg_out[dg];
     for (var i=0; i<dg; i++){
