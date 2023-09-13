@@ -9,17 +9,13 @@ Header:
 
 Fully Homomorphic Encryption (FHE) is a cryptographic primitive that allows to perform computations on encrypted data. A general use case starts with a client sending its encrypted data to a server. The server will then process that encrypted data without learning its content and will send back the encrypted result that only the client can decrypt. The big efficiency improvements achieved in this primitive in the last few years have fostered the design and development of many privacy-enhancing technologies. <!-- reference examples? -->
 
-```fig
-diagram of client-server communication
-```
-
 The security of most FHE constructions rely on the introduction of some small random noise into the ciphertexts. While that noise is meant to make it infeasible for attackers to decrypt without knowing the key, it also raises some issues. The noise increases when performing computations and ciphertexts can only withstand a certain amount of noise before they become useless. In 2009, Gentry solved this problem introducing the so-called bootstrapping procedure that lowers the noise of a ciphertext without having access to the decryption key, hence constructing the first fully homomorphic encryption scheme [Gen09].
 
 Since Gentry's work, a variety of FHE schemes have been proposed with important efficiency improvements <!-- add references?-->. As the bootstrapping is one the main bottlenecks, different approaches have been presented to deal with this costly operation, such as simultaneously refreshing the noise of many ciphertexts in the same bootstrapping or performing as many operations as possible before bootstrapping. The FHEW scheme [DM15] focused instead on simplifying the setting and supports a fast bootstrapping procedure tailored for ciphertexts encrypting a single bit. The TFHE scheme [CGGI16, CGGI20] subsequently improved on it and is part of the state of the art in terms of FHE schemes for boolean and short integer operations (up to 8 bits). More recently, two new variants have been proposed in [LMK+23] and [XZD+23].
 
 
 ```fig
-timeline (include new proposals?)
+timeline
 ```
 
 There are several explanations of the fundamentals of FHEW and/or TFHE schemes ([DM15], [CGGI20], [MP21], [J22], [ZAMA]). Implementation-wise the main references are OpenFHE's implementation of FHEW and TFHE [OpenFHE], and ZAMA's implementation of TFHE [TFHE-rs]. Despite the variety of resources, the use of different notations and levels of abstraction in the explanations and the highly optimized code of the implementations make it hard to relate them to each other. The aim of this blog post is thus to bridge the gap between theory and practice by providing a thorough yet simple description of all the operations that these schemes involve. With that in mind, our focus will not be that much on *why* they work  but rather on *how* they work with descriptions close to the implementation level.
@@ -190,6 +186,10 @@ The accumulator allows to perform the core operation of the functional bootstrap
 
 The rough idea of the accumulator is to initialize a polynomial that stores the images of the function $\mathrm{f}$ in its coefficients. The update or blind rotation step will rotate the coefficients of the polynomial according to the given LWE ciphertext. Finally, the constant term of the polynomial will be extracted to construct the output LWE ciphertext. The part where FHEW and TFHE differ is in how they perform the update step.
 
+```figure
+diagram of Initialization + Update + Extraction
+```
+
 In this phase we will work with more complex ciphertexts that deal with polynomials and that will allow us to multiply ciphertexts: Ring-LWE (RLWE) and Ring-GSW (RGSW) ciphertexts.
 
 ### RLWE ciphertexts
@@ -346,7 +346,7 @@ Note that whenever $a_{i,j}=0$ for some $i \in \{0,\dots,n-1\},\;j \in \{0,\dots
 
 #### TFHE's Accumulator Update
 
-The accumulator update procedure that we are going to describe is slightly different to TFHE's original version. The original construction strongly relies on the use of binary secret keys, but their security is currently not well-understood. While the construction can be adapted to keys with larger components, the performance decays as the size increases. In such situations, the Homomorphic Encryption Standard [ACC+18]] mentions the option of using ternary secret keys, i.e., with components uniformly distributed in $\{-1, 0, 1\}$. Fortunately, the performance of TFHE with ternary keys is close to the binary case by following the approach introduced in [JP22]. That is the version that OpenFHE implements and the one that we are going to cover.
+The accumulator update procedure that we are going to describe is slightly different to TFHE's original version. The original construction strongly relies on the use of binary secret keys, but their security is currently not well-understood. While the construction can be adapted to keys with larger components, the performance decays as the size increases. In such situations, the Homomorphic Encryption Standard [ACC+18] mentions the option of using ternary secret keys, i.e., with components uniformly distributed in $\{-1, 0, 1\}$. Fortunately, the performance of TFHE with ternary keys is close to the binary case by following the approach introduced in [JP22]. That is the version that OpenFHE implements and the one that we are going to cover.
 
 Given as inputs:
 - the mask $a \in \mathbb{Z}_q^n$ of an LWE ciphertext $(a, b) \in \mathrm{LWE}_s^q(m)$, 
@@ -569,6 +569,11 @@ OUTPUT: (a'[N], b')
 RETURN (A, B) 
 ```
 
+## Combining all together
+
+```figure
+diagram of functional bootstrapping from input to output -> more detailed this time
+```
 <!-- TODO: Include summary combining all together-->
 
 ## Example: bootstrapped NAND gate
@@ -576,6 +581,10 @@ RETURN (A, B)
 The presented functional bootstrapping in FHEW and TFHE allows to reduce the noise of a ciphertext while evaluating a negacyclic function $\mathrm{f}$. We will see now how to leverage such a procedure to construct a bootstrapped NAND gate.
 
 In particular, given $(a_1, b_1) \in \mathrm{LWE}_s^q(\tilde{m}_1)$ and $(a_2, b_2) \in \mathrm{LWE}_s^q(\tilde{m}_2)$ we aim to obtain $(a_3, b_3) \in \mathrm{LWE}_s^q(\tilde{m}_3)$, such that $m_3 = m_1 \barwedge m_2$, where $m_1, m_2, m_3 \in \{0,1\}$. 
+
+```figure
+    flow diagram nand gate
+```
 
 Recall that $\tilde{m_i} = \lfloor qm_i/t\rceil$ is the encoding of $m_i$ for $i \in \{1,2,3\}$. Following the procedure of [DM15], we will work with a plaintext modulus of $t=4$.
 
