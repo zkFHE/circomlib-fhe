@@ -48,7 +48,7 @@ template SignedDigitDecomposeInner(Bg, Q) {
 */
 template SignedDigitDecompose(Bg, Q) {
     var dg = logb(Q, Bg);
-    var nbits = log2(Bg) * dg;
+    var nbits = log2(Q);
 
     signal input in;
     signal output out[dg];
