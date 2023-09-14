@@ -5,8 +5,8 @@ include "util.circom";
 
 // assumes 1 < q <= 2^252, 0 <= in <= 2^252
 template parallel Mod(q) {
-	signal input in;
-	signal output out;
+    signal input in;
+    signal output out;
 
     out <== ModBound(q, 1 << 252)(in);
 }
@@ -19,12 +19,12 @@ template ModBound(q, b) {
     signal output out;
 
     quotient <-- in \ q;
-	out <-- in % q;
+    out <-- in % q;
 
-	LtConstant(q)(out);
+    LtConstant(q)(out);
 
     var bound_quot = b \ q + 1;
-	LtConstant(bound_quot)(quotient);
+    LtConstant(bound_quot)(quotient);
 
-	in === quotient * q + out;
+    in === quotient * q + out;
 }
