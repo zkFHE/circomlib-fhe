@@ -48,11 +48,11 @@ template Mod(q) {
     signal output out;
 
     quotient <-- in \ q;
-	out <-- in % q;
+    out <-- in % q;
 
     in === quotient * q + out;
 
-	LtConstant(q)(out);
+    LtConstant(q)(out);
 }
 ```
 
@@ -85,11 +85,11 @@ template Mod(q) {
     signal output out;
 
     quotient <-- in \ q;
-	out <-- in % q;
+    out <-- in % q;
 
     in === quotient * q + out;
 
-	LtConstant(q)(out);
+    LtConstant(q)(out);
 
     var bound_quot = (2**253)\q;
     LtConstant(bound_quot)(quotient);
@@ -111,11 +111,11 @@ template ModBound(q, b) {
     signal output out;
 
     quotient <-- in \ q;
-	out <-- in % q;
+    out <-- in % q;
 
     in === quotient * q + out;
 
-	LtConstant(q)(out);
+    LtConstant(q)(out);
 
     var bound_quot = b\q + 1;
     LtConstant(bound_quot)(quotient);
