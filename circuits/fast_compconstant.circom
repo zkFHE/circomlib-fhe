@@ -84,7 +84,7 @@ template CompConstantBound(ct, nbits) {
 // Assumes ct > 1 and log2(in) <= log2(ct)
 template FastCompConstant(ct) {
     assert(ct > 0);
-	var n = log2(ct);
+    var n = log2(ct);
     signal input in;
     signal {binary} bits[n] <== Num2Bits(n)(in);
     signal output {binary} out <== CompConstantBound(ct, n)(bits);
@@ -122,19 +122,19 @@ template IsLeqtConstant(ct, nbits) {
 
 // Enforces in < ct
 template parallel LtConstant(ct) {
-	signal input in;
-	var n = log2(ct);
+    signal input in;
+    var n = log2(ct);
 
-	component bit = GetMostSignificantBit(n+1);
-	bit.in <== in + (1<<n) - ct;
-	1-bit.out === 1;
+    component bit = GetMostSignificantBit(n+1);
+    bit.in <== in + (1<<n) - ct;
+    1-bit.out === 1;
 }
 
 // Enforces in[i] < ct for all i
 template parallel LtConstantN(ct, N) {
-	signal input in[N];
-	
-	for (var i = 0; i < N; i++) {
-		parallel LtConstant(ct)(in[i]);
-	}
+    signal input in[N];
+    
+    for (var i = 0; i < N; i++) {
+        parallel LtConstant(ct)(in[i]);
+    }
 }
