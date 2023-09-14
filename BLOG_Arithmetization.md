@@ -148,7 +148,7 @@ This means that we can effectively decompose with $dg$ digits any integer in the
 
 In order to deal that issue, whenever the input integer $a \in \mathbb{Z}_Q$ is in the range $[Q/2, Q)$, we can signed decompose $Q-a \in (0, Q/2]$ and then negate modulo $Q$ all the components of the decomposition. Note that for an odd $Q$ all integers in $\mathbb{Z}_Q$ are guaranteed to be decomposable with this approach, and in practice we will work with $Q$ a prime of 27 bits.
 
-We will assume for now that we have a `SignedDigitDecomposeInner` function that receives an integer $in \in [0, Q/2)$ and returns its signed decomposition. Let's see how to use it to solve the general case for $in \in [0, Q)$ following the described approach. The main problem is that we cannot directly condition on whether $a$ is in the lower or upper half of the interval, since that can't be directly expressed as a R1CS constraint. We will need to rely on a compartor gadget `IsGtConstant` that returns $1$ whenever the input is greater than the given constant and $0$ otherwise.
+We will assume for now that we have a `SignedDigitDecomposeInner` function that receives an integer $in \in [0, Q/2)$ and returns its signed decomposition. Let's see how to use it to solve the general case for $in \in [0, Q)$ following the described approach. The main problem is that we cannot directly condition on whether $a$ is in the lower or upper half of the interval, since that can't be directly expressed as a R1CS constraint. We will need to rely on a compartor gadget `IsGtConstant` that returns $1$ whenever the input is greater than the given constant and $0$ otherwise. This gadget requires the input to be in binary form.
 
 Here is a Circom solution to the general case:
 
@@ -161,7 +161,7 @@ Here is a Circom solution to the general case:
 */
 template SignedDigitDecompose(Bg, Q) {
     var dg = logb(Q, Bg);
-    var nbits = log2(Bg) * dg;
+    var nbits = log2(Q);
 
     signal input in;
     signal output out[dg];
@@ -192,15 +192,64 @@ template SignedDigitDecompose(Bg, Q) {
 
 An alternative solution would be to call `SignedDigitDecomposeInner` for both $in$ and $Q-in$ and then select the desired result based on the comparison value. However, that would result in performing almost twice as many computations. As a general rule, it is preferable to make the selection as soon as possible so as to avoid unnecessary computations.
 
-Overall, we have seen how to reduce our general problem to the problem of computing the signed decomposition of an integer $a \in [0, Q/2)$ in base $B$. In order to arithmetize this computation, it will be really convenient to assume that the base $B$ is a power of $2$, as this will always be the case in our FHE context (in practice we work with B=128).
+Overall, we have seen how to reduce our general problem to the problem of computing the signed decomposition of an integer $a \in [0, Q/2)$ in base $B$. In order to arithmetize this computation, it will be really convenient to assume that the base $B$ is a power of $2$, as this will always be the case in our FHE context (in practice we work with $B=128$).
 
-The strategy we will follow is:
+The idea of the strategy we will follow is:
 
 1. Decompose $a$ in base $2$.
 2. Compute the standard digit decomposition of $a$ in base $B$ by grouping the bits corresponding to each digit in base $B$. Here we are leveraging the fact that $B$ is a power of $2$. After this, the $dg$ components will be in the range $[0, B)$.
 3. Go through the standard digit decomposition from the least significant digit to the most significant digit. If the digit is greater than $B/2$ then subtract $B$ to this digit and sum $1$ to the following digit.
 
+Instead of computing the whole standard decomposition first (step 2) and then transforming it to the signed one (step 3), we will actually do it digit by digit. Starting from the least significant digit, we can compute its standard version by summing up the corresponding bits, then subtract the base if necessary and save the carry for the following digit. The following Circom code reflects this approach:
 
+```
+/*
+    Given in an integer mod Q, return its signed decomposition in base Bg. 
+    Denoting dg = ceil(log_{Bg}(Q)), the output is a vector of dg components 
+    each component is in the range [0, Bg/2]U[Q-Bg/2, Q) and 
+    in = sum_i(out[i]*Bg^i) mod Q.
+    in is assumed to allow for a signed decomposition of dg digits
+*/
+template SignedDigitDecomposeInner(Bg, Q) {
+    var dg = logb(Q, Bg);
+    var nbitsBg = log2(Bg);
+    var nbits = dg * nbitsBg;
+
+    signal input in;
+    signal output out[dg];
+
+    // compute binary decomposition of in
+    signal {binary} bits_in[nbits] <== Num2Bits(nbits)(in);
+
+    var carry = 0;
+    signal digits[dg];
+    signal {binary} bits_digit[dg][nbitsBg];
+
+    // iterate through each digit of the decomposition
+    for (var i=0; i<dg; i++) {
+        // initialize digit with the carry from the previous digit
+        var digit = carry;
+
+        // compute unsigned digit by summing up the corresponding bits
+        var powerof2 = 1;
+        for (var j=0; j<nbitsBg; j++) {
+            digit += powerof2 * bits_in[j + i*nbitsBg];
+            powerof2 <<= 1;
+        }
+        digits[i] <== digit;
+
+        // carry = (digit > Bg/2) ? 1 : 0
+        bits_digit[i] <== Num2Bits(nbitsBg)(digits[i]);
+        carry = IsGtConstant(Bg>>1, nbitsBg)(bits_digit[i]);
+
+        // neg_digit = (digits[i] - Bg) mod Q
+        var neg_digit = digits[i] - Bg + Q;
+
+        // out[i] = (digit > Bg/2) ? neg_digit : digits[i]
+        out[i] <== carry*(neg_digit - digits[i]) + digits[i];
+    }
+}
+```
 
 ## Addressing other challenges
 
@@ -212,7 +261,7 @@ $$\lfloor x/q \rceil = quot + (2rem < q)\;?\;0\;:\;1$$
 
 - Standard digit decomposition in different bases. Most of the parameters sets available for FHEW/TFHE used power-of-2 bases.  By assuming so, we can leverage the binary decomposition from `Num2Bits` to obtain the digits for those larger bases.
 
-- Array access to indices unkown at compilation time. The idea is to perform a linear combination of all the elements of the array, where all the coefficients are 0 except the one corresponding to the element pointed by the index, which will be 1. We can use the `IsEqual` gadget to assign the coefficients to the linear combination. See [reference to circom blog post].
+- Array access to indices unkown at compilation time. The idea is to perform a linear combination of all the elements of the array, where all the coefficients are 0 except the one corresponding to the element pointed by the index, which will be 1. We can use the `IsEqual` gadget from circomlib to assign the coefficients to the linear combination. See [reference to circom blog post].
 
 - NTTs: we adapted the NTT implemented by SEAL. We keep track of a bound on the size of the elements and only perform modular reductions right before they overflow the field modulus $p$.
 
