@@ -31,6 +31,10 @@ We will focus on FHEW and TFHE, two FHE schemes that stand out for their fast bo
 - Heavy use of Number Theoretic Transforms (NTTs).
 - Big RLWE-RGSW multiplication with many modular reductions.
 
+```figure
+diagram with the life-cycle of functional bootstrapping with anotations for hard operations to arithmetize
+```
+
 In the next few sections we will go into detail about how to approach the arithmetization of some particular operations. The example code will be written in Circom, a language tailored to arithmetic circuits and the definition of R1CS constraints. For a full arithmetization of FHEW and TFHE in Circom check out our repository [].  
 
 ## Warmup: Modular Reduction
@@ -126,7 +130,7 @@ With this new approach, the number of constraints generated is $log_2(b) + 1$ as
 
 ## Signed Decomposition
 
-The signed decomposition is an expensive operation that takes place in the RLWE-RGSW multiplication, though it can be described independently from FHE.
+The signed decomposition is an expensive operation required for the RLWE-RGSW multiplication, though it can be described independently from FHE.
 
 As a first step, we can describe this operation over arbitrary integers. Given an integer $a \in \mathbb{Z}$ and a base $B \in \mathbb{N}$, the idea is to decompose $a$ in base $B$ as a vector $(a_0, \dots, a_{k-1}) \in \mathbb{Z}^k$ satisfying
 
@@ -269,19 +273,38 @@ $$\lfloor x/q \rceil = quot + (2rem < q)\;?\;0\;:\;1$$
 
 In many situations, the challenge is not that much about figuring out how to arithmetize some particular operation, but rather about how to obtain the least number of constraints while doing so.
 
-## Numbers
+## Total constraints
 
-- Number of lines of code
-- Number of gadgets
-- Number of constraints generated
-- Breakdown of constraints per operation
-- Highlight the bottlenecks
-- Point at ways to minimize the number of constraints further: modular reductions accross functions.
+The arithmetization of all the operations of the schemes allowed us to obtain the full arithmetization of a bootstrapped NAND gate for both FHEW and TFHE schemes [repo]. Such operation is constructed on top of the functional bootstrapping of those schemes as explained in our previous blog post [previous blog post].
+
+The Circom compiler can generate and optimize the number of R1CS constraints for a given circuit. However, the large parameters that those FHE schemes require for a level of 128 bits of security, and the memory requirements of Circom, make it quite challenging to compile the NAND gate circuit with the real parameters. By following a modular approach and understanding how constraints scale with the parameters, we were able to estimate the number of constraints generated for a boostrapped NAND gate in each of the two FHE schemes:
+- FHEW: 2.5 billion constraints.
+- TFHE: 1.5 billion constraints.
+
+Those numbers correspond to a single NAND gate, yes.
+
+In order to understand where these constraints come from, we can break it down in terms of the more costly operations:
+
+| Operation                 | FHEW  | TFHE  |
+|---------------------------|-------|-------|
+| NTT                       | 73.01%| 72.94%|
+| Signed Decomposition      | 21.63%| 18.01%|
+| RLWE-RGSW multiplication  | 4.66% | 7.90% |
+| Key Switching             | 0.65% | 1.08% |
+| Accumulator Initilization | 0.04% | 0.07% |
+
+As we can see, the NTTs are not only the bottlenecks in terms of the efficiency of the schemes, but also in terms of the number of constraints they generate. The second most costly operation is the signed decomposition we previously explained, as this operation is used a significant number of times and requires a couple of bit decompositions per operation. The third and last relevant operation is the multiplication between RLWE and RGSW ciphertexts, whose polynomials are assumed to be already signed decomposed and in evaluation form.
+
+Most of the constraints from the NTTs and RLWE-RGSW multiplications come from their modular reductions. Our approach is to perform a modular reduction right at the end of the NTT and at the end of the ciphertext multiplication, as well as intermediate reductions in the NTTs right before the elements overflow. While it can be seen from our modular reduction gadgets that reducing smaller integers is cheaper than reducing larger ones, it is generally cheaper to perform a single large reduction rather than many small ones. By keeping track of the sizes of the elements of the polynomials across different functions one could reduce the number of modular reductions to those strictly necessary before overflowing the field modulus. While that logic is not so simple to implement in a language like Circom, it is definitely something to consider to reduce the number of constraints further.
 
 ## Conclusion
 
-- Hard
-- Iterative process
-- Domain expertise: speeds up come from optimizing modular reduction e.g., which requires some analysis
-- High level numbers: compare to zk-VM approach, works theoretically but orders in magnitud slower vs expert analysis
-- If you want to know how to implement it with some high-assurance - stay tune for next blog post
+The arithmetization of a somewhat complex computation such as that of FHEW and TFHE schemes is not a trivial task, but one that poses several challenges as many operations can't be directly expressed in the form required for R1CS. Once we figured out a way to arithmetize each operation, an iterative process followed to reduce the number of constraints as much as possible while maintaning soundness.
+
+<!-- Point out the need for expertise to obtain a perfomance orders of magnitude better than an automated approach -->
+
+While the resulting number of constraints that we have obtained is impractical for any real application, the breakdown per operation helps to identify the operations of FHEW and TFHE that require more effort to prove in zero-knowledge. The significant number of constraints that come from emulating the FHE rings in the ZKP field (by applying modular reductions) hints at the need of developing proof systems tailored for the structure in which computations take place.
+
+All the code from our arithmetization of FHEW and TFHE can be found here [repo].
+
+If you are interested in learning how to implement high-assurance code in Circom, stay tune for our next blog post.
