@@ -1,6 +1,3 @@
 [submodule "circuits/circomlib"]
 	path = circuits/circomlib
 	url = https://github.com/iden3/circomlib
-[submodule "doe-suite"]
-	path = doe-suite
-	url = git@github.com:nicolas-kuechler/doe-suite.git
