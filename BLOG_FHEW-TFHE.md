@@ -1,3 +1,23 @@
+<!--- https://www.fabriziomusacchio.com/blog/2021-08-10-How_to_use_LaTeX_in_Markdown/ -->
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [['$','$'], ['\\(','\\)']],
+      processEscapes: true},
+      jax: ["input/TeX","input/MathML","input/AsciiMath","output/CommonHTML"],
+      extensions: ["tex2jax.js","mml2jax.js","asciimath2jax.js","MathMenu.js","MathZoom.js","AssistiveMML.js", "[Contrib]/a11y/accessibility-menu.js"],
+      TeX: {
+      extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"],
+      equationNumbers: {
+      autoNumber: "AMS"
+      }
+    }
+  });
+</script>
+
 # A primer to the FHEW & TFHE schemes
 
 Header: 
@@ -60,7 +80,7 @@ An important part of the functional bootstrapping only deals with LWE ciphertext
 Given a message $m \in \mathbb{Z}_t$, an LWE encryption of $m$ under a key $s \in \mathbb{Z}_q^n$ is an LWE ciphertext of the form:
 
 $$
-    (a, b) = (a, \;\;(a \cdot s + \tilde{m} + e)\mod q) \in \mathbb{Z}_q^{n} \times \mathbb{Z}_q
+    (a, b) = \left(a, (a \cdot s + \tilde{m} + e)\mod q \right) \in \mathbb{Z}_q^{n} \times \mathbb{Z}_q
 $$
 
 where
@@ -69,7 +89,7 @@ where
 - $t$ is the message modulus ($t = 2$ for binary messages)
 - $\mathbb{Z}_t$ is the message space
 - $q$ is the ciphertext modulus (in practice $q = 1024$)
-- $s \in \mathbb{Z}_q^n$ is the key (in practice we will work with keys in the subset $\mathbb{Z}_3 ^n \cong \{-1,0,1\}^n$)
+- $s \in \mathbb{Z}_q^n$ is the key (in practice we will work with keys in the subset $\mathbb{Z}_3 ^n \cong \\\{-1,0,1\\\}^n$)
 - $a \leftarrow \mathbb{Z}_q^n$ is a uniformly at random sampled mask
 - $e \in \mathbb{Z}_q$ is a small noise or error sampled at random
 
@@ -101,10 +121,10 @@ The security of this encryption scheme relies on the hardness assumption of the 
 The LWE encryption scheme is additively homomorphic. Given two LWE ciphertexts $(a, b) \in \mathrm{LWE}_s^q(\tilde{m}), (a', b') \in \mathrm{LWE}_s^q(\tilde{m}')$ then
 
 $$
-    (a'', b'') = (a, b) + (a', b') = (a + a', b + b') \in \mathbb{Z}_q^{n+1},
+    (a'{}', b'{}') = (a, b) + (a', b') = (a + a', b + b') \in \mathbb{Z}_q^{n+1},
 $$
 
-where the sum of the masks $a + a'$ is performed component-wise, and all the sums are performed modulo $q$. We have that $\mathrm{err}(a'',b'')=\mathrm{err}(a,b)+\mathrm{err}(a',b')$, and so we will have $(a'', b'') \in \mathrm{LWE}_s^q(\tilde{m}+\tilde{m}')$ as long as $|\mathrm{err}(a,b)+\mathrm{err}(a',b')| < q/(2t).$
+where the sum of the masks $a + a'$ is performed component-wise, and all the sums are performed modulo $q$. We have that $\mathrm{err}(a'{}',b'{}')=\mathrm{err}(a,b)+\mathrm{err}(a',b')$, and so we will have $(a'{}', b'{}') \in \mathrm{LWE}_s^q(\tilde{m}+\tilde{m}')$ as long as $|\mathrm{err}(a,b)+\mathrm{err}(a',b')| < q/(2t).$
 
 ```figure
 diagram of LWE addition
@@ -124,39 +144,39 @@ $$
 
 Overall,
 
-$$
+<p>$$
     \mathrm{ModSwitch}(a, b) = (([a_1]_{Q:q}, \dots, [a_n]_{Q:q}), [b]_{Q:q}) \in \mathrm{LWE}^q_s(\tilde{m}).
-$$
+$$</p>
 
 ### Key Switching
 
 The key-switching procedure allows one to change the key under which an LWE ciphertext is encrypted. This method is parametrized by a key switching modulus $Q_{ks}$ (in practice $Q_{ks} \approx 2^{14}$) and a key switching base $B_{ks}$ (in practice $B_{ks} \approx 128$). We can denote the number of digits of $Q_{ks}$ under base $B_{ks}$ as $dks = \lceil \log_{B_{ks}}Q_{ks} \rceil$.
 
-Given an LWE ciphertext $(a,b) \in \mathrm{LWE}^{Q_{ks}}_z(\tilde{m})$ under secret key $z \in \mathbb{Z}_{Q_{ks}}^N$ and a key switching key $\mathrm{KSK}$, this operation returns an LWE ciphertext in $\mathrm{LWE}^{Q_{ks}}_s(\tilde{m})$ under secret key $s \in \mathbb{Z}_{Q_{ks}}^n$.
+Given an LWE ciphertext $(a,b) \in \mathrm{LWE}^{Q\_{ks}}\_z(\tilde{m})$ under secret key $z \in \mathbb{Z}\_{Q\_{ks}}^N$ and a key switching key $\mathrm{KSK}$, this operation returns an LWE ciphertext in $\mathrm{LWE}^{Q\_{ks}}\_s(\tilde{m})$ under secret key $s \in \mathbb{Z}_{Q\_{ks}}^n$.
 
 
 The key switching key is of the form $\mathrm{KSK}=\{\mathrm{ksk}_{i,j,v}\}$ where:
 
-$$
+<p>$$
     k_{i,j,v} \in \mathrm{LWE}^{Q_{ks}}_s(vz_iB^j_ {ks}), 
-$$
+$$</p>
 
-$$
-    i \in \{0,\dots,N-1\}, \; j \in \{0,\dots, dks-1 \}, \; v \in \{0,\dots,B_{ks}-1\}.
-$$
+<p>$$
+    i \in \{0,\dots,N-1\}, ~ j \in \{0,\dots, dks-1 \}, ~ v \in \{0,\dots,B_{ks}-1\}.
+$$</p>
 
 Note that this method not only changes the encryption key but also the dimension of the LWE ciphertext from a dimension $N$ (in practice $N = 1024$) to a dimension $n$ (in practice $n \approx 512$). 
 
 The key switching works by decomposing under the base $B_{ks}$ each component of the mask $a$ of the input LWE ciphertext:
 
-$$
-a_i = \sum_{j=0}^{dks-1} a_{i,j}B^j_ {ks}, \; i \in \{0,\dots, N-1\}, \; a_{i,j} \in \{0,\dots,B_{ks}-1\}.
-$$
+<p>$$
+a_i = \sum_{j=0}^{dks-1} a_{i,j}B^j_ {ks},  i \in \{0,\dots, N-1\},  a_{i,j} \in \{0,\dots,B_{ks}-1\}.
+$$</p>
 
 By obtaining the decomposition, the output of the method is:
-$$
+<p>$$
     \mathrm{KeySwitch}((a,b), \mathrm{KSK}) = (\textbf{0},b) - \sum_{i,j}k_{i,j, a_{i,j}}
-$$
+$$</p>
 
 We can consider the LWE ciphertexts to be pairs of the form `(a[n], b)` and the key switching key to be a 3D array of size $N \times dks \times B_{ks}$ whose components are LWE ciphertexts.
 
@@ -200,15 +220,15 @@ The polynomials we will work with are elements of the cyclotomic ring $\mathcal{
 
 Given a message $m \in \mathcal{R}_Q$, an RLWE ciphertext encrypting $m$ can be computed as:
 
-$$
+<p>$$
     (A, B) = (A, A \cdot z + m + e) \in \mathcal{R}_Q \times \mathcal{R}_Q,
-$$
+$$</p>
 
 where
 
 - $N$ is the dimension of the cyclotomic ring (in practice $N = 1024$)
 - $Q$ is the prime ciphertext modulus (in practice $Q \approx 2^{27}$)
-- $z \in \mathcal{R}_Q$ is the key (in practice we will work with keys in the "subset" $\{-1,0,1\}^N$)
+- $z \in \mathcal{R}_Q$ is the key (in practice we will work with keys in the "subset" $\\{-1,0,1\\}^N$)
 - $a \leftarrow \mathcal{R}_Q$ is a uniformly at random sampled mask (by sampling each of the N coefficients of the polynomial)
 - $e \in \mathcal{R}_Q$ is a small noise sampled at random
 
@@ -227,24 +247,24 @@ Ring-GSW (RGSW) ciphertexts are based on the work from [GSW13] and can be seen a
 
 The RLWE encryption scheme
 
-$$\mathrm{RLWE}_z^Q(m) \subseteq \mathcal{R}_Q \times \mathcal{R}_Q,$$
+<p>$$\mathrm{RLWE}_z^Q(m) \subseteq \mathcal{R}_Q \times \mathcal{R}_Q,$$</p>
 
 can be extended to the following RLWE' scheme
 
-$$\mathrm{RLWE}_z^{'Q}(m) = (\mathrm{RLWE}_z^Q(m), \mathrm{RLWE}_z^Q(B_Gm), \dots, \mathrm{RLWE}_z^Q(B_G^{dg-1}m)) \subseteq (\mathcal{R}_Q^2)^{dg}$$
+<p>$$\mathrm{RLWE}_z^{'Q}(m) = (\mathrm{RLWE}_z^Q(m), \mathrm{RLWE}_z^Q(B_Gm), \dots, \mathrm{RLWE}_z^Q(B_G^{dg-1}m)) \subseteq (\mathcal{R}_Q^2)^{dg}$$</p>
 
 and finally, we can obtain the RGSW ciphertexts as
 
-$$\mathrm{RGSW}_z^Q(m)=(\mathrm{RLWE}_z^{'Q}(-s \cdot m), \mathrm{RLWE}_z^{'Q}(m)) \subseteq ((\mathcal{R}_Q^2)^{dg})^2$$
+<p>$$\mathrm{RGSW}_z^Q(m)=(\mathrm{RLWE}_z^{'Q}(-s \cdot m), \mathrm{RLWE}_z^{'Q}(m)) \subseteq ((\mathcal{R}_Q^2)^{dg})^2$$</p>
 
   
 ### Initialization
 
 Given the second component $b \in \mathbb{Z}_q$ of an LWE ciphertext and a function $\mathrm{f}: \mathbb{Z}_q \to \mathbb{Z}_Q$, the accumulator is initialized to a noiseless encryption $(0,p) \in \mathrm{RLWE}(p)$ of the polynomial
 
-$$
+<p>$$
 p(X) = \sum_{i=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)}
-$$
+$$</p>
 
 Note that the range of the input function $\mathrm{f}$ is $\mathbb{Z}_Q$, so in general we will need to rescale the values of the images when working with a function mapping $\mathbb{Z}_q \to \mathbb{Z}_q$. We will see an example of this when going over the bootstrapped NAND gate.
 
@@ -268,7 +288,7 @@ RETURN (A, B)
 
 Looking closely at the method, only half of the values of $\mathrm{f}$ are used when initializing the accumulator. This points to one important requirement of the accumulator regarding the properties of $\mathrm{f}$. In reality, we cannot use any function $\mathrm{f}: \mathbb{Z}_q \to \mathbb{Z}_Q$, but rather, one that is negacyclic, i.e., one that satisfies
 
-$$\mathrm{f}(v + q/2) = -f(v)$$
+<p>$$\mathrm{f}(v + q/2) = -f(v)$$</p>
 
 for all $v \in \mathbb{Z}_q$. Despite this restriction, we will be able generally to adapt an arbitrary function to one that is negacyclic.
 
@@ -279,12 +299,12 @@ The accumulator update or blind rotation is the core operation of the bootstrapp
 
 Given as inputs:
 - the mask $a \in \mathbb{Z}_q^n$ of an LWE ciphertext $(a, b) \in \mathrm{LWE}_s^q(m)$, 
-- the initialized accumulator $(A, B) \in \mathrm{RLWE}_z^Q(\sum_{i=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)})$ and 
+- the initialized accumulator $(A, B) \in \mathrm{RLWE}\_z^Q(\sum\_{I=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)})$ and 
 - the bootstrapping key $\mathrm{BSK}$ consisting of a collection of RGSW ciphertexts encrypting the components of the key $s \in \mathbb{Z}_q^n$ under key $z \in \mathcal{R}_Q$, 
 
 the blind rotation procedure returns an updated accumulator:
 
-$$(A', B') \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-\textbf{a} \cdot \textbf{s}) \cdot (2N/q)}\right).$$
+<p>$$(A', B') \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-\textbf{a} \cdot \textbf{s}) \cdot (2N/q)}\right).$$</p>
 
 The difference in content between the input and output ciphertexts is that the latter is multiplied by the monomial $X^{(-a \cdot s) \cdot (2N/q)}$. That factor essentially performs a rotation of the coefficients of the polynomial, taking into account that operations are computed modulo $X^N+1$ (so $X^N \equiv -1$ and $X^{2N} \equiv 1$). 
 
@@ -292,7 +312,7 @@ Fundamentally, FHEW and TFHE differ in how they multiply the content of the accu
 
 In both cases, the schemes rely on a multiplication operation between RLWE and RGSW ciphertexts. Let's assume for now that we know how to multiply them and let 
 
-$$\odot : \mathrm{RLWE} \times \mathrm{RGSW} \to \mathrm{RLWE}$$
+<p>$$\odot : \mathrm{RLWE} \times \mathrm{RGSW} \to \mathrm{RLWE}$$</p>
 
 denote that operation.
 
@@ -302,21 +322,20 @@ The accumulator update of FHEW is parametrized by a refreshing base $B_r$ (in pr
 
 Given as inputs:
 - the mask $a \in \mathbb{Z}_q^n$ of an LWE ciphertext $(a, b) \in \mathrm{LWE}_s^q(m)$, 
-- the initialized accumulator $(A, B) \in \mathrm{RLWE}_z^Q(\sum_{i=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)})$ and 
+- the initialized accumulator $(A, B) \in \mathrm{RLWE}\_z^Q(\sum\_{I=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)})$ and 
 - the bootstrapping key $\mathrm{BSK}=\{\mathrm{bsk}_{i,j,v}\}$ where
 
-$$ \mathrm{bsk}_{i,j,v} \in \mathrm{RGSW}_z^Q(X^{vB_r^js_i \cdot (2N/q)}),$$
+<p>$$ \mathrm{bsk}_{i,j,v} \in \mathrm{RGSW}_z^Q(X^{vB_r^js_i \cdot (2N/q)}),$$</p>
 
-$$i \in \{0,\dots,n-1\}, \;\; j \in \{0,\dots,dr-1\}, \;\; v \in \{0,\dots,B_r-1\}
-$$
+<p>$$i \in \{0,\dots,n-1\},  j \in \{0,\dots,dr-1\},  v \in \{0,\dots,B_r-1\}$$</p>
 
 the blind rotation procedure returns an updated accumulator:
 
-$$(A', B') \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-\textbf{a} \cdot \textbf{s}) \cdot (2N/q)}\right).$$
+<p>$$(A', B') \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-\textbf{a} \cdot \textbf{s}) \cdot (2N/q)}\right).$$</p>
 
-This procedure has a similar idea to the key switching previously explained. For each $i \in \{0,\dots,n-1\}$ we will decompose $-a_i \;\mathrm{mod} \; q$ under the base $B_r$, i.e., 
+This procedure has a similar idea to the key switching previously explained. For each $i \in \{0,\dots,n-1\}$ we will decompose $-a_i \mathrm{mod}  q$ under the base $B_r$, i.e., 
 
-$$-a_i \equiv \sum_{j=0}^{dr-1}a_{i,j}B_r^j \mod q.$$ 
+<p>$$-a_i \equiv \sum_{j=0}^{dr-1}a_{i,j}B_r^j \mod q.$$ </p>
 
 Then at each step $(i,j) \in \{0,\dots,n\} \times \{0,\dots,dr-1\}$ we will update the current value $\mathrm{ACC}$ of the accumulator as $\mathrm{ACC} := \mathrm{ACC} \odot \mathrm{bsk}_{i,j,a_{i,j}}$.
 
@@ -342,7 +361,7 @@ ENDFOR
 RETURN (A', B')
 ```
 
-Note that whenever $a_{i,j}=0$ for some $i \in \{0,\dots,n-1\},\;j \in \{0,\dots dr-1\}$, the respective $\mathrm{bsk}_{i,j,a_{i,j}}$ will just be an encryption of $1$. In that case, the multiplication $(A',B') \odot \mathrm{bsk}_{i,j,a_{i,j}}$ is redundant. Therefore, we can omit from $\mathrm{BSK}$ all the ciphertexts of the form $\mathrm{bsk}_{i,j,0}$ and only update the accumulator for those $(i,j)$ for which $a_{i,j} \neq 0$.
+Note that whenever $a_{i,j}=0$ for some $i \in \{0,\dots,n-1\},j \in \{0,\dots dr-1\}$, the respective $\mathrm{bsk}\_{i,j,a\_{i,j}}$ will just be an encryption of $1$. In that case, the multiplication $(A',B') \odot \mathrm{bsk}_{i,j,a_{i,j}}$ is redundant. Therefore, we can omit from $\mathrm{BSK}$ all the ciphertexts of the form $\mathrm{bsk}_{i,j,0}$ and only update the accumulator for those $(i,j)$ for which $a_{i,j} \neq 0$.
 
 #### TFHE's Accumulator Update
 
@@ -350,19 +369,18 @@ The accumulator update procedure that we are going to describe is slightly diffe
 
 Given as inputs:
 - the mask $a \in \mathbb{Z}_q^n$ of an LWE ciphertext $(a, b) \in \mathrm{LWE}_s^q(m)$, 
-- the initialized accumulator $(A, B) \in \mathrm{RLWE}_z^Q(\sum_{i=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)})$ and 
+- the initialized accumulator $(A, B) \in \mathrm{RLWE}\_z^Q(\sum\_{I=0}^{q/2} f(b-i) \cdot X^{i \cdot (2N/q)})$ and 
 - the bootstrapping key $\mathrm{BSK}'=\{\mathrm{bsk}'_{i,j}\}$ where
 
-$$ \mathrm{bsk}'_{i,j} \in \mathrm{RGSW}_z^Q(x_{i,j}),$$
+<p>$$ \mathrm{bsk}'_{i,j} \in \mathrm{RGSW}_z^Q(x_{i,j}),$$</p>
 
-$$s_i=x_{i,1} - x_{i,-1}, \;\;x_{i,j} \in \{0,1\}, \;\; x_{i,-1} \cdot x_{i,1} = 0,$$
+<p>$$s_i=x_{i,1} - x_{i,-1}, x_{i,j} \in \{0,1\},  x_{i,-1} \cdot x_{i,1} = 0,$$</p>
 
-$$i \in \{0,\dots,n-1\}, \;\; j \in \{-1, 1\}
-$$
+<p>$$i \in \{0,\dots,n-1\},  j \in \{-1, 1\}$$</p>
 
 the blind rotation procedure returns an updated accumulator:
 
-$$(A', B') \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-\textbf{a} \cdot \textbf{s}) \cdot (2N/q)}\right).$$
+<p>$$(A', B') \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-\textbf{a} \cdot \textbf{s}) \cdot (2N/q)}\right).$$</p>
 
 The bootstrapping key $\mathrm{BSK}'$ is quite different from the bootstrapping key $\mathrm{BSK}$ from FHEW. In this case, we are leveraging the fact that $s \in \{-1,0,1\}^n$ to decompose each of its components as $s_i = x_{i,1} - x_{i,-1}$ where:
 
@@ -372,7 +390,7 @@ The bootstrapping key $\mathrm{BSK}'$ is quite different from the bootstrapping 
 
 We will update the accumulator sequentially for each component $s_i$ of the mask. In each step $i \in \{0,\dots,n-1\}$, the value $\mathrm{ACC}$ of the accumulator will be updated as:
 
-$$\mathrm{ACC} := \mathrm{ACC} + (X^{-a_i \cdot (2N/q)}-1) \cdot (\mathrm{ACC} \odot \mathrm{bsk}'_{i,1}) + (X^{a_i \cdot (2N/q)}-1) \cdot (\mathrm{ACC} \odot \mathrm{bsk}'_{i,-1}).$$
+<p>$$\mathrm{ACC} := \mathrm{ACC} + (X^{-a_i \cdot (2N/q)}-1) \cdot (\mathrm{ACC} \odot \mathrm{bsk}'_{i,1}) + (X^{a_i \cdot (2N/q)}-1) \cdot (\mathrm{ACC} \odot \mathrm{bsk}'_{i,-1}).$$</p>
 
 To see this in the pseudocode version:
 
@@ -400,73 +418,73 @@ RETURN (A', B')
 
 As we can see from both versions of the blind rotation procedure, they strongly rely on a multiplication operation
 
-$$\odot : \mathrm{RLWE} \times \mathrm{RGSW} \to \mathrm{RLWE}$$
+<p>$$\odot : \mathrm{RLWE} \times \mathrm{RGSW} \to \mathrm{RLWE}$$</p>
 
 between ciphertexts. We will now see what this operation looks like in detail.
 
 Recall that
 
-$$\mathrm{RLWE}_z^Q(m) \subseteq \mathcal{R}_Q^2,$$
+<p>$$\mathrm{RLWE}_z^Q(m) \subseteq \mathcal{R}_Q^2,$$</p>
 
 and from them, we can construct
 
-$$\mathrm{RLWE}_z^{'Q}(m) = (\mathrm{RLWE}_z^Q(m), \mathrm{RLWE}_z^Q(B_Gm), \dots, \mathrm{RLWE}_z^Q(B_G^{dg-1}m)) \subseteq (\mathcal{R}_Q^2)^{dg}$$
+<p>$$\mathrm{RLWE}_z^{'Q}(m) = (\mathrm{RLWE}_z^Q(m), \mathrm{RLWE}_z^Q(B_Gm), \dots, \mathrm{RLWE}_z^Q(B_G^{dg-1}m)) \subseteq (\mathcal{R}_Q^2)^{dg}$$</p>
 
 and
 
-$$\mathrm{RGSW}_z^Q(m)=(\mathrm{RLWE}_z^{'Q}(-s \cdot m), \mathrm{RLWE}_z^{'Q}(m)) \subseteq ((\mathcal{R}_Q^2)^{dg})^2$$
+<p>$$\mathrm{RGSW}_z^Q(m)=(\mathrm{RLWE}_z^{'Q}(-s \cdot m), \mathrm{RLWE}_z^{'Q}(m)) \subseteq ((\mathcal{R}_Q^2)^{dg})^2$$</p>
 
 where $B_G$ is the gadget base and $dg = \lceil \log_{B_G}(Q)\rceil$.
 
 The first step of the multiplication is to perform a signed decomposition of all the coefficients of the two polynomials of the $\mathrm{RLWE}$ ciphertext.
 
-For an integer $x \in \mathbb{Z}_Q$, its signed decomposition is of the form $(x_0,\dots,x_{dg-1})$, where 
+For an integer $x \in \mathbb{Z}\_Q$, its signed decomposition is of the form $(x\_0,\dots,x\_{dg-1})$, where 
 
-$$x = \sum_{i=0}^{dg-1} x_iB_G^i\;\;(\mathrm{mod}\; Q),\;\; x_i \in [0,B_G/2) \cup [Q-B_G/2, Q).$$
+<p>$$x = \sum_{i=0}^{dg-1} x_iB_G^i(\mathrm{mod} Q), x_i \in [0,B_G/2) \cup [Q-B_G/2, Q).$$</p>
 
 As a reference, in a standard digit decomposition, we would have $x_i \in [0, B_G].$
 
-When applying a signed decomposition to a ciphertext $(A, B) \in \mathcal{R}_Q^2$, we obtain $2d_g$ polynomials $(A_0, B_0, \dots, A_{dg-1}, B_{dg-1}) \in \mathcal{R}_Q^{2dg}$ such that
+When applying a signed decomposition to a ciphertext $(A, B) \in \mathcal{R}_Q^2$, we obtain $2d_g$ polynomials $(A\_0, B\_0, \dots, A\_{dg-1}, B\_{dg-1}) \in \mathcal{R}\_Q^{2dg}$ such that
 
-$$A = \sum_{i=0}^{dg-1} A_iB_G^i\;\;(\mathrm{mod}\;Q),\;\;B = \sum_{i=0}^{dg-1} B_iB_G^i\;\;(\mathrm{mod}\;Q),$$
+<p>$$A = \sum_{i=0}^{dg-1} A_iB_G^i(\mathrm{mod}Q),B = \sum_{i=0}^{dg-1} B_iB_G^i(\mathrm{mod}Q),$$</p>
 
 and all the coefficients of $A_i$ and $B_i$ are in $[0,B_G/2) \cup [Q-B_G/2, Q)$ for all $i \in \{0,\dots,dg-1\}$.
 
 Parallelly, given an RGSW ciphertext 
 
-$$(c, c') \in \mathrm{RLWE}_z^{'Q}(-s\cdot m) \times \mathrm{RLWE}_z^{'Q}(m) \subseteq \mathrm{RGSW}_z^Q(m) \subseteq ((\mathcal{R}_Q^2)^{dg})^2,$$
+<p>$$(c, c') \in \mathrm{RLWE}_z^{'Q}(-s\cdot m) \times \mathrm{RLWE}_z^{'Q}(m) \subseteq \mathrm{RGSW}_z^Q(m) \subseteq ((\mathcal{R}_Q^2)^{dg})^2,$$</p>
 
 we can express it as
 
-$$(c_0, c'_0, \dots, c_{dg-1}, c'_{dg-1}) \in (\mathcal{R}_Q^2)^{2dg},$$
+<p>$$(c_0, c'_0, \dots, c_{dg-1}, c'_{dg-1}) \in (\mathcal{R}_Q^2)^{2dg},$$</p>
 
 where each $c_i$ and $c_i'$ is an RLWE ciphertext containg two polynomials for $i \in \{0,\dots,dg-1\}$.
 
 Finally, building upon the multiplication between a polynomial and an RLWE ciphertext,
 
-$$(\cdot): \mathcal{R}_Q \times \mathrm{RLWE} \to \mathrm{RLWE}$$
+<p>$$(\cdot): \mathcal{R}_Q \times \mathrm{RLWE} \to \mathrm{RLWE}$$</p>
 
-$$p \cdot (A, B) := (p \cdot A, p \cdot B),$$
+<p>$$p \cdot (A, B) := (p \cdot A, p \cdot B),$$</p>
 
 we can construct the multiplication between RLWE and RGSW ciphertexts as
 
-$$(\odot) : \mathrm{RLWE} \times \mathrm{RGSW} \to \mathrm{RLWE}$$
+<p>$$(\odot) : \mathrm{RLWE} \times \mathrm{RGSW} \to \mathrm{RLWE}$$</p>
 
-$$(A, B) \odot (c, c'):= A_0 \cdot c_0+B_0 \cdot c'_0 + \cdots + A_{dg-1} \cdot c_{dg-1} + B_{dg-1} \cdot c'_{dg-1}$$
+<p>$$(A, B) \odot (c, c'):= A_0 \cdot c_0+B_0 \cdot c'_0 + \cdots + A_{dg-1} \cdot c_{dg-1} + B_{dg-1} \cdot c'_{dg-1}$$</p>
 
-where $(A_0, B_0, \dots, A_{dg-1}, B_{dg-1}) \in \mathcal{R}_Q^{2dg}$ is the signed decomposition of $(A, B)$ and $(c_0, c'_0, \dots, c_{dg-1}, c'_{dg-1}) \in (\mathcal{R}_Q^2)^{2dg}$ is the expanded expression of $(c, c')$. Note that we are essentially performing a dot product between those two vectors.
+where $(A\_0, B\_0, \dots, A\_{dg-1}, B\_{dg-1}) \in \mathcal{R}_Q^{2dg}$ is the signed decomposition of $(A, B)$ and $(c\_0, c'\_0, \dots, c\_{dg-1}, c'\_{dg-1}) \in (\mathcal{R}\_Q^2)^{2dg}$ is the expanded expression of $(c, c')$. Note that we are essentially performing a dot product between those two vectors.
 
-Overall, we now know how to reduce that essential multiplication of ciphertexts to multiplications of polynomials in $\mathcal{R}_Q = \mathbb{Z}_Q[X]/(X^N+1)$. While we could just multiply polynomials via the *schoolbook* method and then reduce modulo $(X^N+1)$, the problem of multiplying polynomials in a ring has been deeply studied and there are far more efficient ways to do so. In particular, one can resort to the Number Theoretic Transform (NTT).
+Overall, we now know how to reduce that essential multiplication of ciphertexts to multiplications of polynomials in $\mathcal{R}\_Q = \mathbb{Z}\_Q[X]/(X^N+1)$. While we could just multiply polynomials via the *schoolbook* method and then reduce modulo $(X^N+1)$, the problem of multiplying polynomials in a ring has been deeply studied and there are far more efficient ways to do so. In particular, one can resort to the Number Theoretic Transform (NTT).
 
 The NTT is a linear transformation that takes a polynomial in coefficient form and converts it to evaluation form. In particular, given a polynomial in $\mathcal{R}_Q$, which has N coefficients, the NTT converts it to an array of $N$ evaluation points in $\mathbb{Z}_Q$. The advantage of such transformation is that polynomials in evaluation form can be multiplied component-wise, requiring a total of $N$ multiplications in $\mathbb{Z}_Q$.
 
 The inverse of the NTT is another linear transformation that we will denote by INTT and which is really close algorithmically to the NTT. By combining both transformations and the component-wise product ($\circ$), we can efficiently obtain the product of two polynomials $p_1, p_2 \in \mathcal{R}_Q$ as
 
-$$p_1 \cdot p_2 = \mathrm{INTT}(\mathrm{NTT}(p_1) \circ \mathrm{NTT}(p_2)).$$
+<p>$$p_1 \cdot p_2 = \mathrm{INTT}(\mathrm{NTT}(p_1) \circ \mathrm{NTT}(p_2)).$$</p>
 
 This is the method that we will apply to multiply polynomials in the context of the RLWE-RGSW multiplication. 
 
-We have to note that the special form of the ring that we are working with, i.e., $\mathbb{Z}_Q[X]/(X^N+1)$ where $N$ is a power of 2 and $Q \equiv 1\;\;(\mathrm{mod}\; 2N)$, requires a special type of NTT. We refer the interested reader to [LZ22].
+We have to note that the special form of the ring that we are working with, i.e., $\mathbb{Z}_Q[X]/(X^N+1)$ where $N$ is a power of 2 and $Q \equiv 1(\mathrm{mod}~ 2N)$, requires a special type of NTT. We refer the interested reader to [LZ22].
 
 #### Integrating the NTT in the accumulator update
 
@@ -530,11 +548,11 @@ FOR i=0 to n-1
     prod2[0] := sum([dec[i] ⚬ key2[i][0] for i in [0, 2dg-1)])
     prod2[1] := sum([dec[i] ⚬ key2[i][1] for i in [0, 2dg-1)])
 
-    (A'', B'') := (binom1 ⚬ prod1[0], binom1 ⚬ prod1[1])
-    (A'', B'') := (A'', B'') + (binom2 ⚬ prod2[0], binom2 ⚬ prod2[1])
-    (A'', B'') := (INTT(A''), INTT(B''))
+    (A'{}', B'{}') := (binom1 ⚬ prod1[0], binom1 ⚬ prod1[1])
+    (A'{}', B'{}') := (A'{}', B'{}') + (binom2 ⚬ prod2[0], binom2 ⚬ prod2[1])
+    (A'{}', B'{}') := (INTT(A'{}'), INTT(B'{}'))
     
-    (A', B') := (A', B') + (A'', B'')
+    (A', B') := (A', B') + (A'{}', B'{}')
 ENDFOR
 
 RETURN (A', B')
@@ -548,9 +566,9 @@ Another interesting remark is that in practice, instead of a signed decompositio
 
 Given the accumulator 
 
-$$(A, B) \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-a\cdot s) \cdot (2N/q)}\right)$$ 
+<p>$$(A, B) \in \mathrm{RLWE}_z^Q\left(\sum_{i=0}^{q/2} f(b-i) \cdot X^{(i-a\cdot s) \cdot (2N/q)}\right)$$ </p>
 
-where $(a, b) \in \mathrm{LWE}_s^q(\tilde{m})$, we will extract an LWE ciphertext $(a',b') \in \mathrm{LWE}_{z'}^Q(\mathrm{f}(\tilde{m}))$.
+where $(a, b) \in \mathrm{LWE}\_s^q(\tilde{m})$, we will extract an LWE ciphertext $(a',b') \in \mathrm{LWE}\_{z'}^Q(\mathrm{f}(\tilde{m}))$.
 
 The $N$ components of the mask $a'$ will be the $N$ coefficients of the mask $A$. Additionally, the second component $b'$ of the LWE ciphertext will just be the constant term of the polynomial $B$.
 
@@ -590,7 +608,7 @@ Recall that $\tilde{m_i} = \lfloor qm_i/t\rceil$ is the encoding of $m_i$ for $i
 
 The idea is to compute the sum of the given ciphertexts:
 
-$$(a_s, b_s) := (a_1, b_1) + (a_2, b_2) \in \mathrm{LWE}_s^q(\tilde{m_s})$$
+<p>$$(a_s, b_s) := (a_1, b_1) + (a_2, b_2) \in \mathrm{LWE}_s^q(\tilde{m_s})$$</p>
 
 where $m_s = m_1 + m_2 \in \{0,1,2\}$ and to take the resulting ciphertext $(a_s, b_s)$ as the input for the functional boostrapping. 
 
@@ -606,31 +624,31 @@ Finally, we need to take into account that we are looking for a function $f: \ma
 
 For that reason, we will work with the function 
 
-$$f: \mathbb{Z}_q \to \mathbb{Z}_Q$$
+<p>$$f: \mathbb{Z}_q \to \mathbb{Z}_Q$$</p>
 
 defined as
 
-$$x \in [-q/8, 3q/8) \implies f(x)=Q/8$$
+<p>$$x \in [-q/8, 3q/8) \implies f(x)=Q/8$$</p>
 
 and
 
-$$x \in [3q/8, 7q/8) \implies f(x)=-Q/8,$$
+<p>$$x \in [3q/8, 7q/8) \implies f(x)=-Q/8,$$</p>
 
 where the images of the endpoints have been set to ensure the negacyclic requirement.
 
 Now if we introduce the ciphertext $(a_s, b_s) \in \mathrm{LWE}_s^q(\tilde{m_s})$ and the function $\mathrm{f}$ into the accumulator, we obtain after the extraction a ciphertext 
 
-$$(a_f, b_f) \in \mathrm{LWE}_{z'}^Q(f(\tilde{m}))$$
+<p>$$(a_f, b_f) \in \mathrm{LWE}_{z'}^Q(f(\tilde{m}))$$</p>
 
 that encrypts $Q/8$ if the result of the NAND is 1 and $-Q/8$ if the result is 0.
 
 To revert the shift in the function $\mathrm{f}$, we can add a noiseless encryption of $Q/8$ to obtain a ciphertext
 
-$$(a_{f}, b_{f}+Q/8) \in \mathrm{LWE}_{z'}^Q(f(\tilde{m}) + Q/8).$$
+<p>$$(a_{f}, b_{f}+Q/8) \in \mathrm{LWE}_{z'}^Q(f(\tilde{m}) + Q/8).$$</p>
 
 Finally, by applying a modulus switch to the key switching modulus $Q_{ks}$, followed by a key switch to the original key $s$, and a final modulus switch to the original modulus $q$, we end up with
 
-$$(a_3, b_3) \in \mathrm{LWE}_s^q(\tilde{m}_3)\;\;s.t.\;\;m_3 = m_1 \barwedge m_2$$
+<p>$$(a_3, b_3) \in \mathrm{LWE}_s^q(\tilde{m}_3)s.t.m_3 = m_1 \barwedge m_2$$</p>
 
 as we wanted.
 
@@ -661,6 +679,6 @@ extended keys. In: Dolev, S., Katz, J., Meisels, A. (eds.) Cyber Security, Crypt
 - [OpenFHE]: OpenFHE - Open-Source Fully Homomorphic Encryption Library. https://github.com/openfheorg/openfhe-development (2023)
 - [TFHE-rs]: TFHE-rs: Pure Rust implementation of the TFHE scheme for boolean and integers FHE arithmetics. https://docs.zama.ai/tfhe-rs (2023)
 - [XZD+23]: Binwu Xiang, Jiang Zhang, Yi Deng, Yiran Dai, and Dengguo Feng. Fast blind rotation for bootstrapping fhes. In Helena Handschuh and Anna Lysyanskaya, editors, Advances in Cryptology – CRYPTO 2023, pages 3–36, Cham, 2023. Springer Nature Switzerland.
-- [ZAMA]: TFHE Deep Dive. https://www.zama.ai/post/tfhe-deep-dive-part-1 (2022) 
+- [ZAMA]: [TFHE Deep Dive](https://www.zama.ai/post/tfhe-deep-dive-part-1) (2022)
   
 Footer: repeat header

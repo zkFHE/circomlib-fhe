@@ -1,3 +1,25 @@
+<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/prism.min.js"></script> -->
+
+<!--- https://www.fabriziomusacchio.com/blog/2021-08-10-How_to_use_LaTeX_in_Markdown/ -->
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [['$','$'], ['\\(','\\)']],
+      processEscapes: true},
+      jax: ["input/TeX","input/MathML","input/AsciiMath","output/CommonHTML"],
+      extensions: ["tex2jax.js","mml2jax.js","asciimath2jax.js","MathMenu.js","MathZoom.js","AssistiveMML.js", "[Contrib]/a11y/accessibility-menu.js"],
+      TeX: {
+      extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"],
+      equationNumbers: {
+      autoNumber: "AMS"
+      }
+    }
+  });
+</script>
+
 # Arithmetization of FHEW & TFHE
 
 Fully Homomorphic Encryption (FHE) allows one to perform computations on encrypted data, making it particularly useful for providing privacy to computations. The privacy guarantees of FHE schemes can however be threatened by parties with access to a partial decryption oracle, i.e., when they can distinguish whether the ciphertext sent to another party decrypted correctly or not. Moreover, in many settings, the parties would like to receive some guarantee of the correctness of the computation that has been performed. Both issues can be addressed by combining FHE with Zero-Knowledge Proofs (ZKPs). This way, a proof of correctness can be attached to the result of the computation while hiding the private inputs. That combination, however, raises some challenges.
@@ -35,7 +57,7 @@ We will focus on FHEW and TFHE, two FHE schemes that stand out for their fast bo
 diagram with the life-cycle of functional bootstrapping with anotations for hard operations to arithmetize
 ```
 
-In the next few sections, we will go into detail about how to approach the arithmetization of some particular operations. The example code will be written in Circom, a language tailored to arithmetic circuits and the definition of R1CS constraints. For a full arithmetization of FHEW and TFHE in Circom check out our repository [].  
+In the next few sections, we will go into detail about how to approach the arithmetization of some particular operations. The example code will be written in Circom, a language tailored to arithmetic circuits and the definition of R1CS constraints. For a full arithmetization of FHEW and TFHE in Circom check out [our repository](https://github.com/zkFHE/circomlib-fhe).  
 
 ## Warmup: Modular Reduction
 
@@ -44,6 +66,10 @@ The mismatch between the rings that FHE schemes use, i.e., $\mathbb{Z}_q$ and $\
 Therefore, the modular reduction is a core operation that needs arithmetizing. While it is not a complex operation, it is a good example to showcase how to arithmetize with Circom and how to optimize the number of constraints.
 
 A first approach to arithmetize the modular reduction could look as follows:
+
+```js
+var x = 0;
+```
 
 ```
 template Mod(q) {
@@ -138,7 +164,7 @@ $$a = \sum_{i=0}^{k-1}a_i B^i.$$
 
 In a standard digit decomposition we want that $a_i \in [0, B)$ for all $i \in \{0,...,k-1\}$. In a signed decomposition, however, the components need to be $a_i \in [-B/2, B/2]$ for all $i \in \{0,\dots,k-1\}$.
 
-We move now to the setting of integers modulo $Q$, which is the one we will be working with. Given $a \in \mathbb{Z}_Q$ and a base $B \in \mathbb{N}$, a signed decomposition of $a$ in base $B$ is a vector $(a_0,\dots,a_{dg-1}) \in \mathbb{Z}^{dg}$ satisfying
+We move now to the setting of integers modulo $Q$, which is the one we will be working with. Given $a \in \mathbb{Z}\_Q$ and a base $B \in \mathbb{N}$, a signed decomposition of $a$ in base $B$ is a vector $(a_0,\dots,a_{dg-1}) \in \mathbb{Z}^{dg}$ satisfying
 
 $$a = \sum_{i=0}^{dg-1}a_iB^i \mod Q$$
 
@@ -261,7 +287,7 @@ As for addressing some of the other challenges that we faced, here is a list of 
 
 - Rounding. To compute $\lfloor x/q \rceil$, once we have obtained the quotient and remainder and constrained the division as $x = quot \cdot q + rem$, then we can use some comparison gadget to obtain the result computing
 
-$$\lfloor x/q \rceil = quot + (2rem < q)\;?\;0\;:\;1$$
+$$\lfloor x/q \rceil = quot + (2\cdot rem < q) ~ ? ~ 0 ~ : ~ 1$$
 
 - Standard digit decomposition in different bases. Most of the parameter sets available for FHEW/TFHE used power-of-2 bases.  By assuming so, we can leverage the binary decomposition from `Num2Bits` to obtain the digits for those larger bases.
 
@@ -285,13 +311,13 @@ Those numbers correspond to a single NAND gate, yes.
 
 In order to understand where these constraints come from, we can break it down in terms of the more costly operations:
 
-| Operation                 | FHEW  | TFHE  |
-|---------------------------|-------|-------|
-| NTT                       | 73.01%| 72.94%|
-| Signed Decomposition      | 21.63%| 18.01%|
-| RLWE-RGSW multiplication  | 4.66% | 7.90% |
-| Key Switching             | 0.65% | 1.08% |
-| Accumulator Initilization | 0.04% | 0.07% |
+| Operation                  | FHEW  | TFHE  |
+|----------------------------|-------|-------|
+| NTT                        | 73.01%| 72.94%|
+| Signed Decomposition       | 21.63%| 18.01%|
+| RLWE-RGSW multiplication   | 4.66% | 7.90% |
+| Key Switching              | 0.65% | 1.08% |
+| Accumulator Initialization | 0.04% | 0.07% |
 
 As we can see, the NTTs are not only the bottlenecks in terms of the efficiency of the schemes, but also in terms of the number of constraints they generate. The second most costly operation is the signed decomposition we previously explained, as this operation is used a significant number of times and requires a couple of bit decompositions per operation. The third and last relevant operation is the multiplication between RLWE and RGSW ciphertexts, whose polynomials are assumed to be already sign-decomposed and in evaluation form.
 
@@ -305,6 +331,6 @@ The arithmetization of a somewhat complex computation such as that of FHEW and T
 
 While the resulting number of constraints that we have obtained is impractical for any real application, the breakdown per operation helps to identify the operations of FHEW and TFHE that require more effort to prove in zero knowledge. The significant number of constraints that come from emulating the FHE rings in the ZKP field (by applying modular reductions) hints at the need to develop proof systems tailored for the structure in which computations take place.
 
-All the code from our arithmetization of FHEW and TFHE can be found here [repo].
+All the code from our arithmetization of FHEW and TFHE can be found here in our [circomlib-fhe repo](https://github.com/zkFHE/circomlib-fhe).
 
-If you are interested in learning how to implement high-assurance code in Circom, stay tuned for our next blog post.
+If you are interested in learning how to implement high-assurance code in Circom, stay tuned for our next blog post!
