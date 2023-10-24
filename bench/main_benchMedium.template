@@ -1,0 +1,51 @@
+pragma circom 2.1.0;
+
+include "circuits/mod.circom";
+include "circuits/mul.circom";
+include "circuits/noise_flooding.circom";
+
+template BenchMedium(l, n, t, q1, q2, q3, q4, q5, q6) {
+    // Compute ModSwitch(Mul((in - w), (in - w))), where in is a ciphertext (in NTT form), and w is a plaintext server inputs.
+    // No relinearization is carried out, but a modulus switching is performed to reduce the size of the output.
+    // This is similar to the computation performed in ORide [PDETHH17](https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-pham.pdf).
+    var secparam = 128;
+    var q[6] = [q1, q2, q3, q4, q5, q6];
+    signal input in[2][l][n]; 
+    signal input w[n];
+    signal input noise[secparam][3][1][n];
+    signal input b[secparam];
+    signal diff[2][l][n];
+    signal mul[3][l][n];
+    signal out[3][1][n];
+    signal output flooded[3][1][n];
+    
+    // Range check for plaintext inputs
+    LtConstantN(t, n)(w);
+
+    // diff = Sub(in, w)
+    for (var i = 0; i < l; i++) {
+        // OPTIMIZATION: if t < q[i], there's no need to reduce w modulo q[i] for each CRT component
+        assert(t < q[i]);
+        for (var j = 0; j < n; j++) {
+            diff[0][i][j] <== parallel FastSubMod(q[i])([in[0][i][j], w[j]]);
+        }
+    }
+    diff[1] <== in[1];
+
+    // mul = Mul(diff, diff)
+    mul <== parallel SquareCtxt(l, n, q1, q2, q3, q4, q5, q6)(diff);
+    
+    // out = ModSwitchToLast(mul)
+    // OPTIMIZATION: Since we are in CRT representation, we can simply set all higher moduli to zero and only take the first modulus
+    // We don't bother to have zero outputs for efficiency
+    for (var j = 0; j < n; j++) {
+        out[0][0][j] <== mul[0][0][j];
+        out[1][0][j] <== mul[1][0][j];
+        out[2][0][j] <== mul[2][0][j];
+    }
+    
+
+    flooded <== NoiseFlooding(secparam, 3, 1, n, q1, q2, q3, q4, q5, q6)(out, noise, b); // Only use noise flooding on level 1
+}
+
+component main {public [in, noise]} = BenchMedium(L, N, T, Q1, Q2, Q3, Q4, 0, 0);

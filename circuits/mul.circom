@@ -6,103 +6,114 @@ include "mod.circom";
 include "ntt.circom";
 include "circomlib/circuits/multiplexer.circom";
 
+// assumes all elements are already mod q
+template FastMulPointwise(N, q) {
+    signal input in1[N]; 
+    signal input in2[N]; 
+    signal output out[N];
+    
+    for (var i = 0; i < N; i++) {
+        out[i] <== ModBound(q, (q-1)*(q-1))(in1[i] * in2[i]);
+    }
+}
+
 template parallel MulPointwise(N, q) {
-	signal input in1[N]; 
-	signal input in2[N]; 
-	signal output out[N];
-	
-	for (var i = 0; i < N; i++) {
-		out[i] <== Mod(q)(in1[i] * in2[i]);
-	}
+    signal input in1[N]; 
+    signal input in2[N]; 
+    signal output out[N];
+    
+    for (var i = 0; i < N; i++) {
+        out[i] <== Mod(q)(in1[i] * in2[i]);
+    }
 }
 
 template parallel MulsPointwise(l, N, q1, q2, q3, q4, q5, q6) {
     var q[6] = [q1, q2, q3, q4, q5, q6];
-	signal input in1[l][N]; 
-	signal input in2[l][N]; 
-	signal output out[l][N];
-	
-	for (var i = 0; i < l; i++) {
-		if (q[i] != 0) {
-			out[i] <== MulPointwise(N, q[i])(in1[i], in2[i]);
-		}
-	}
+    signal input in1[l][N]; 
+    signal input in2[l][N]; 
+    signal output out[l][N];
+    
+    for (var i = 0; i < l; i++) {
+        if (q[i] != 0) {
+            out[i] <== MulPointwise(N, q[i])(in1[i], in2[i]);
+        }
+    }
 }
 
 template parallel MulPointwiseNoMod(N) {
-	signal input in1[N]; 
-	signal input in2[N]; 
-	signal output out[N];
-	
-	for (var i = 0; i < N; i++) {
-		out[i] <== in1[i] * in2[i];
-	}
+    signal input in1[N]; 
+    signal input in2[N]; 
+    signal output out[N];
+    
+    for (var i = 0; i < N; i++) {
+        out[i] <== in1[i] * in2[i];
+    }
 }
 
 template parallel MulsPointwiseNoMod(l, N) {
-	signal input in1[l][N]; 
-	signal input in2[l][N]; 
-	signal output out[l][N];
-	
-	for (var i = 0; i < l; i++) {
-		out[i] <== MulPointwiseNoMod(N)(in1[i], in2[i]);
-	}
+    signal input in1[l][N]; 
+    signal input in2[l][N]; 
+    signal output out[l][N];
+    
+    for (var i = 0; i < l; i++) {
+        out[i] <== MulPointwiseNoMod(N)(in1[i], in2[i]);
+    }
 }
 
-template parallel MulNTT(l, N, q1, q2, q3, q4, q5, q6) {
+template parallel MulNTT(l, N, q1, q2, q3, q4, q5, q6, roots) {
     var q[6] = [q1, q2, q3, q4, q5, q6];
-	signal input in1[l][N];
-	signal input in2[l][N];
-	signal output out[l][N];
+    signal input in1[l][N];
+    signal input in2[l][N];
+    signal output out[l][N];
 
-	for (var i = 0; i < l; i++) {
-		if (q[i] == 0) {
-			// TODO: add explicit constraint that out === 0, or do we discard this in a higher protocol level?
-		} else {
-			var tmp1[N] = NTT(N, q[i])(in1[i]);
-			var tmp2[N] = NTT(N, q[i])(in2[i]);
-			var tmp[N] = MulPointwise(N, q[i])(tmp1, tmp2);
-			out[i] <== INTT(N, q[i])(tmp);
-		}
-	}
+    for (var i = 0; i < l; i++) {
+        if (q[i] == 0) {
+            // TODO: add explicit constraint that out === 0, or do we discard this in a higher protocol level?
+        } else {
+            var tmp1[N] = NTT(N, q[i], roots[i])(in1[i]);
+            var tmp2[N] = NTT(N, q[i], roots[i])(in2[i]);
+            var tmp[N] = MulPointwise(N, q[i])(tmp1, tmp2);
+            out[i] <== INTT(N, q[i], roots[i])(tmp);
+        }
+    }
 }
 
 template parallel MulPolySchoolbook(N, q) {
-	signal input in1[N];
-	signal input in2[N];
-	var tosum[N][2*N];
-	signal output out[N];
-	
-	var l;
-	var n = N-1;
-	for (var k = 0; k <= n; k++) {
-		for (var i = 0; i <= k; i++) {
-			tosum[k][i] = in1[i] * in2[k-i];
-		}
-		
-		// Reduce mod (X^N + 1)
-		l = k + N;
-		var len2 = min(n, l) - max(0, l-n) + 1;
-		var idx = 0;
-		for (var i = max(0, l-n); i <= min(n, l); i++) {
-			tosum[k][k+idx+1] = 2*q - (in1[i] * in2[l-i]);
-			idx += 1;
-		}
-		out[k] <== SumK(2*N, k + 1 + len2, q, 2*log2(q))(tosum[k]);
-	}
+    signal input in1[N];
+    signal input in2[N];
+    var tosum[N][2*N];
+    signal output out[N];
+    
+    var l;
+    var n = N-1;
+    for (var k = 0; k <= n; k++) {
+        for (var i = 0; i <= k; i++) {
+            tosum[k][i] = in1[i] * in2[k-i];
+        }
+        
+        // Reduce mod (X^N + 1)
+        l = k + N;
+        var len2 = min(n, l) - max(0, l-n) + 1;
+        var idx = 0;
+        for (var i = max(0, l-n); i <= min(n, l); i++) {
+            tosum[k][k+idx+1] = 2*q - (in1[i] * in2[l-i]);
+            idx += 1;
+        }
+        out[k] <== SumK(2*N, k + 1 + len2, q, 2*log2(q))(tosum[k]);
+    }
 }
 
 /* TODO
 template parallel MulCtxtCtxtSchoolbook(l, N, q1, q2, q3, q4, q5, q6) {
-	var q[6] = [q1, q2, q3, q4, q5, q6];
-	
-	signal input in1[2][l][N];
-	signal input in2[2][l][N];
-	signal output out[3][l][N];
-	
-	for (var i = 0; i < l; i++) {
-		out[i] <== MulPolySchoolbook(N, q[i])(in1[i], in2[i]);
-	}
+    var q[6] = [q1, q2, q3, q4, q5, q6];
+    
+    signal input in1[2][l][N];
+    signal input in2[2][l][N];
+    signal output out[3][l][N];
+    
+    for (var i = 0; i < l; i++) {
+        out[i] <== MulPolySchoolbook(N, q[i])(in1[i], in2[i]);
+    }
 }
 */
 
@@ -138,15 +149,15 @@ template parallel FastDoubleMod(q) {
 }
 
 template parallel FastDoubleMods(l, n, q1, q2, q3, q4, q5, q6) {
-	var q[6] = [q1, q2, q3, q4, q5, q6];
-	signal input in[l][n];
-	signal output out[l][n];
+    var q[6] = [q1, q2, q3, q4, q5, q6];
+    signal input in[l][n];
+    signal output out[l][n];
 
-	for (var i = 0; i < l; i++) {
-		for (var j = 0; j < n; j++) {
-			out[i][j] <== parallel FastDoubleMod(q[i])(in[i][j]);
-		}
-	}
+    for (var i = 0; i < l; i++) {
+        for (var j = 0; j < n; j++) {
+            out[i][j] <== parallel FastDoubleMod(q[i])(in[i][j]);
+        }
+    }
 }
 
 // Compute assuming both inputs are in NTT form
