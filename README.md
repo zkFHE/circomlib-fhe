@@ -15,29 +15,29 @@ The circuits implement schemes based on Ring Learning With Errors (RLWE) such as
 This repository contains 3 main folders: `circuits`, `test`, and `bench`: 
 
 ### Circuits
-[circuits](circuits/)<br>
-├─ [mod.circom](circuits/mod.circom) ┄┄ modular reduction <br>
-├─ [add.circom](circuits/add.circom) ┄┄ modular addition and subtraction of integers and polynomials    <br>
-├─ [mul.circom](circuits/mul.circom)point-wise multiplication, multiplication of polynomials and ciphertexts <br>
-├─ [rns.circom](circuits/rns.circom) Residue Number System (RNS) operations <br>
-├─ [ntt.circom](circuits/ntt.circom) ┄┄ Number Theoretic Transform (NTT) <br>
-├─ [signed_decomposition.circom](circuits/signed_decomposition.circom) ┄┄ signed digit decomposition of integers and RLWE ciphertexts <br>
-├─ [array_access.circom](circuits/array_access.circom) ┄┄ access to array elements pointed by signal indices <br>
-├─ [lwe.circom](circuits/lwe.circom) ┄┄ addition, subtraction, modulus switching and key switching of LWE ciphertexts <br>
-├─ [rlwe.circom](circuits/rlwe.circom) ┄┄ addition of RLWE ciphertexts and RLWE-RGSW multiplication <br>
-├─ [bootstrap.circom](circuits/bootstrap.circom) ┄┄ accumulator initialization and extractor, common to FHEW and TFHE  <br>
-├─ [bootstrap_fhew.circom](circuits/bootstrap_fhew.circom) ┄┄ accumulator update for FHEW scheme   <br>
-├─ [bootstrap_tfhe.circom](circuits/bootstrap_tfhe.circom) ┄┄ accumulator update for TFHE scheme   <br>
-├─ [fast_compconstant.circom](circuits/fast_compconstant.circom) ┄┄ fast comparisons between signals and constants <br>
-├─ [nand.circom](circuits/nand.circom) ┄┄ bootstrapped NAND gate <br>
-├─ [noise_flooding.circom](circuits/noise_flooding.circom) ┄┄ simple additive noise flooding for RLWE ciphertexts <br>
-├─ [ring.circom](circuits/ring.circom) ┄┄ operations assuming the underlying algebra is the ring $Z_{q_1\dots q_L}[X]/(X^N+1)$, useful for ring-based ZKP such as [Rinocchio](https://github.com/zkfhe/ringSNARK) <br>
-├─ [util.circom](circuits/util.circom) ┄┄ min, max, logarithms and extended-gcd functions <br>
-├─ [circomlib/](circuits/circomlib/)  ┄┄ the circomlib repo, imported as a git submodule <br>
+[circuits](/tree/main/circuits/)<br>
+├─ [mod.circom](/blob/main/circuits/mod.circom) ┄┄ modular reduction <br>
+├─ [add.circom](/blob/main/circuits/add.circom) ┄┄ modular addition and subtraction of integers and polynomials    <br>
+├─ [mul.circom](/blob/main/circuits/mul.circom)point-wise multiplication, multiplication of polynomials and ciphertexts <br>
+├─ [rns.circom](/blob/main/circuits/rns.circom) Residue Number System (RNS) operations <br>
+├─ [ntt.circom](/blob/main/circuits/ntt.circom) ┄┄ Number Theoretic Transform (NTT) <br>
+├─ [signed_decomposition.circom](/blob/main/circuits/signed_decomposition.circom) ┄┄ signed digit decomposition of integers and RLWE ciphertexts <br>
+├─ [array_access.circom](/blob/main/circuits/array_access.circom) ┄┄ access to array elements pointed by signal indices <br>
+├─ [lwe.circom](/blob/main/circuits/lwe.circom) ┄┄ addition, subtraction, modulus switching and key switching of LWE ciphertexts <br>
+├─ [rlwe.circom](/blob/main/circuits/rlwe.circom) ┄┄ addition of RLWE ciphertexts and RLWE-RGSW multiplication <br>
+├─ [bootstrap.circom](/blob/main/circuits/bootstrap.circom) ┄┄ accumulator initialization and extractor, common to FHEW and TFHE  <br>
+├─ [bootstrap_fhew.circom](/blob/main/circuits/bootstrap_fhew.circom) ┄┄ accumulator update for FHEW scheme   <br>
+├─ [bootstrap_tfhe.circom](/blob/main/circuits/bootstrap_tfhe.circom) ┄┄ accumulator update for TFHE scheme   <br>
+├─ [fast_compconstant.circom](/blob/main/circuits/fast_compconstant.circom) ┄┄ fast comparisons between signals and constants <br>
+├─ [nand.circom](/blob/main/circuits/nand.circom) ┄┄ bootstrapped NAND gate <br>
+├─ [noise_flooding.circom](/blob/main/circuits/noise_flooding.circom) ┄┄ simple additive noise flooding for RLWE ciphertexts <br>
+├─ [ring.circom](/blob/main/circuits/ring.circom) ┄┄ operations assuming the underlying algebra is the ring $Z_{q_1\dots q_L}[X]/(X^N+1)$, useful for ring-based ZKP such as [Rinocchio](https://github.com/zkfhe/ringSNARK) <br>
+├─ [util.circom](/blob/main/circuits/util.circom) ┄┄ min, max, logarithms and extended-gcd functions <br>
+├─ [circomlib/](/blob/main/circuits/circomlib/)  ┄┄ the circomlib repo, imported as a git submodule <br>
 └─ ...
 
 ### Benchmarks
-[bench](bench/) contains templates and circom files for various FHE (sub-)computations, as well as executables to run them. 
+[bench](/tree/main/treebench/) contains templates and circom files for various FHE (sub-)computations, as well as executables to run them. 
 
 ### Test
-[test](test/) contains tests (written as circom templates with known test vectors) for various FHE (sub-)computations. 
+[test](/tree/main/test/) contains tests (written as circom templates with known test vectors) for various FHE (sub-)computations. 
